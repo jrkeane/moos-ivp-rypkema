@@ -33,32 +33,37 @@ Odometry::~Odometry()
 
 bool Odometry::OnNewMail(MOOSMSG_LIST &NewMail)
 {
+  //appcasting mail handling superclass method
+  AppCastingMOOSApp::OnNewMail(NewMail);
+
   MOOSMSG_LIST::iterator p;
-   
+
   for(p=NewMail.begin(); p!=NewMail.end(); p++) {
     CMOOSMsg &msg = *p;
 
     if (MOOSStrCmp(msg.GetKey(), "NAV_X")) {
+       //store x position and post flag that we have a valid reading
        m_current_x = msg.GetDouble();
        if (!m_first_reading) m_first_reading = true;
     }
 
     else if (MOOSStrCmp(msg.GetKey(), "NAV_Y")) {
+       //store y position
        m_current_y = msg.GetDouble();
-    } 
+    }
 
 #if 0 // Keep these around just for template
     string key   = msg.GetKey();
     string comm  = msg.GetCommunity();
     double dval  = msg.GetDouble();
-    string sval  = msg.GetString(); 
+    string sval  = msg.GetString();
     string msrc  = msg.GetSource();
     double mtime = msg.GetTime();
     bool   mdbl  = msg.IsDouble();
     bool   mstr  = msg.IsString();
 #endif
    }
-	
+
    return(true);
 }
 
@@ -71,7 +76,7 @@ bool Odometry::OnConnectToServer()
    // possibly look at the mission file?
    // m_MissionReader.GetConfigurationParam("Name", <string>);
    // m_Comms.Register("VARNAME", 0);
-	
+
    RegisterVariables();
    return(true);
 }
@@ -83,20 +88,32 @@ bool Odometry::OnConnectToServer()
 bool Odometry::Iterate()
 {
   m_iterations++;
-  
-  double diff;
+
+  //appcasting iterate superclass method
+  AppCastingMOOSApp::Iterate();
+
+  double diff;  //hold the current timestep odometry distance
   if ((m_first_reading) && !(m_moved)) {
+     //if its the first reading, set the previous value to current value
+     //and post flag that the vehicle has moved (not really needed)
      m_previous_x = m_current_x;
      m_previous_y = m_current_y;
-     m_moved = true; 
+     m_moved = true;
   }
   if (m_moved) {
+     //vehicle has 'moved' so calculate the odometry and accumulate
      diff = sqrt(pow((m_current_x-m_previous_x),2)+pow((m_current_y-m_previous_y),2));
      m_total_distance += diff;
      m_previous_x = m_current_x;
      m_previous_y = m_current_y;
   }
+
+  //publish our odometry measurement to MOOSDB
   m_Comms.Notify("ODOMETRY_DIST", m_total_distance);
+
+  //appcasting post report superclass method
+  AppCastingMOOSApp::PostReport();
+
   return(true);
 }
 
@@ -106,6 +123,9 @@ bool Odometry::Iterate()
 
 bool Odometry::OnStartUp()
 {
+  //appcasting startup superclass method
+  AppCastingMOOSApp::OnStartUp();
+
   list<string> sParams;
   m_MissionReader.EnableVerbatimQuoting(false);
   if(m_MissionReader.GetConfiguration(GetAppName(), sParams)) {
@@ -114,7 +134,7 @@ bool Odometry::OnStartUp()
       string original_line = *p;
       string param = stripBlankEnds(toupper(biteString(*p, '=')));
       string value = stripBlankEnds(*p);
-      
+
       if(param == "FOO") {
         //handled
       }
@@ -123,10 +143,10 @@ bool Odometry::OnStartUp()
       }
     }
   }
-  
+
   m_timewarp = GetMOOSTimeWarp();
 
-  RegisterVariables();	
+  RegisterVariables();
   return(true);
 }
 
@@ -135,8 +155,18 @@ bool Odometry::OnStartUp()
 
 void Odometry::RegisterVariables()
 {
+   //appcasting variable registration superclass method
+   AppCastingMOOSApp::RegisterVariables();
+
+   //register for vehicle navigation info
    m_Comms.Register("NAV_X");
    m_Comms.Register("NAV_Y");
   // m_Comms.Register("FOOBAR", 0);
 }
 
+bool Odometry::buildReport()
+{
+   m_msgs << "Total Distance Travelled: " << m_total_distance << " meters" << endl;
+
+   return(true);
+}
