@@ -1,4 +1,4 @@
-##############################################################################
+#############################################################################
 # FILE:        moos-ivp-extend/src/CMakeLists.txt
 # DATE:        2010/09/07
 # DESCRIPTION: CMakeLists.txt file for the moos-ivp-extend source directory
@@ -17,6 +17,7 @@ INCLUDE_DIRECTORIES(${LOCAL_LIBRARY_DIRS})
 ADD_SUBDIRECTORY(lib_behaviors-test)
 ADD_SUBDIRECTORY(pXRelayTest)
 ADD_SUBDIRECTORY(pExampleApp)
+ADD_SUBDIRECTORY(pOdometry)
 
 ##############################################################################
 #                           END of CMakeLists.txt
