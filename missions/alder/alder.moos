@@ -27,6 +27,17 @@ ProcessConfig = ANTLER
   Run = pOdometry	@ NewConsole = false
 }
 
+
+//------------------------------------------
+// pOdometry config block
+
+ProcessConfig = pOdometry
+{
+  AppTick	= 10
+  CommsTick	= 10
+}
+
+
 //------------------------------------------
 // uSimMarine config block
 
