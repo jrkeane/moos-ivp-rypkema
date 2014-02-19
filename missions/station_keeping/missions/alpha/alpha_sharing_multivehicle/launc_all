@@ -1,0 +1,6 @@
+pAntler --MOOSTimeWarp=10 alpha.moos
+sleep 1
+pAntler --MOOSTimeWarp=10 bravo.moos
+sleep 1
+pAntler --MOOSTimeWarp=10 shoreside.moos
+sleep 1

@@ -1,0 +1,120 @@
+//-------------------------------------------------
+// NAME: M. Benjamin, MIT CSAIL
+// FILE: bravo.moos
+//-------------------------------------------------
+
+ServerHost = localhost
+ServerPort = 9000
+Community  = shoreside
+
+MOOSTimeWarp = 1
+TERM_REPORTING = true
+
+// Forest Lake
+LatOrigin  = 43.825300 
+LongOrigin = -70.330400 
+
+// MIT Sailing Pavilion (use this one)
+// LatOrigin  = 42.358456 
+// LongOrigin = -71.087589
+
+
+//------------------------------------------
+// Antler configuration  block
+ProcessConfig = ANTLER
+{
+  MSBetweenLaunches = 200
+
+  Run = MOOSDB		@ NewConsole = false
+  Run = pMarineViewer	@ NewConsole = false
+  Run = pShare          @ NewConsole = false
+}
+
+//------------------------------------------
+// pShare config block
+ProcessConfig = pShare
+{
+  AppTick = 4
+  CommsTick = 4
+
+  input = route=localhost:9200
+  output = src_name=DEPLOY, route=localhost:9201
+  output = src_name=MOOS_MANUAL_OVERIDE, route=localhost:9201
+  output = src_name=RETURN, route=localhost:9201
+  output = src_name=RETURN_UPDATES, route=localhost:9201
+  output = src_name=DEPLOY, route=localhost:9202
+  output = src_name=MOOS_MANUAL_OVERIDE, route=localhost:9202
+  output = src_name=RETURN, route=localhost:9202
+  output = src_name=RETURN_UPDATES2, route=localhost:9202
+}
+
+//------------------------------------------
+// pMarineViewer config block
+ProcessConfig = pMarineViewer
+{
+  AppTick    = 4
+  CommsTick  = 4
+
+  tiff_file            = forrest19.tif
+
+  set_pan_x            = -90
+  set_pan_y            = -280
+  zoom                 = 0.65
+  vehicle_shape_scale  = 1.5
+  hash_delta           = 50
+  hash_shade           = 0.4
+  hash_viewable        = true
+
+  trails_point_size   = 1
+
+  // Appcast configuration
+  appcast_height       = 75
+  appcast_width        = 30
+  appcast_viewable     = true
+  appcast_color_scheme = indigo
+  nodes_font_size      = medium
+  procs_font_size      = medium
+  appcast_font_size    = small
+  
+  //datum_viewable = true
+  //datum_size     = 18
+  //gui_size = small
+
+  left_context[survey-point] = DEPLOY=true
+  left_context[survey-point] = MOOS_MANUAL_OVERIDE=false
+  left_context[survey-point] = RETURN=false
+  left_context[change-return-point] = RETURN_UPDATES = points=$(XPOS),$(YPOS)
+  left_context[change-return-point] = VIEW_POINT = x=$(XPOS),y=$(YPOS),label=return point
+  left_context[change-return-point-and-return] = RETURN_UPDATES = points=$(XPOS),$(YPOS)
+  left_context[change-return-point-and-return] = VIEW_POINT = x=$(XPOS),y=$(YPOS),label=return point
+  left_context[change-return-point-and-return] = RETURN = true
+  left_context[change-return-point-and-return2] = RETURN_UPDATES2 = points=$(XPOS),$(YPOS)
+  left_context[change-return-point-and-return2] = VIEW_POINT = x=$(XPOS),y=$(YPOS),label=return point
+  left_context[change-return-point-and-return2] = RETURN = true
+
+  left_context[view_poly] = VIEW_POLYGON = format=radial,x=$(XPOS),y=$(YPOS),radius=10,pts=8,edge_size=1,label=mypoly
+
+  right_context[return] = DEPLOY=true
+  right_context[return] = MOOS_MANUAL_OVERIDE=false
+  right_context[return] = RETURN=false
+
+  left_context[polyvert] = POLY_VERT=x=$(XPOS),y=$(YPOS)
+
+  scope  = RETURN
+  scope  = WPT_STAT
+  scope  = VIEW_SEGLIST
+  scope  = VIEW_POINT
+  scope  = VIEW_POLYGON
+  scope  = MVIEWER_LCLICK
+  scope  = MVIEWER_RCLICK
+
+  button_one = DEPLOY # DEPLOY=true
+  button_one = MOOS_MANUAL_OVERIDE=false # RETURN=false
+  button_two = RETURN:T # RETURN=true
+  button_three = RETURN:F # RETURN=false
+
+  action  = MENU_KEY=deploy # DEPLOY = true # RETURN = false
+  action+ = MENU_KEY=deploy # MOOS_MANUAL_OVERIDE=false
+  action  = RETURN=true
+  action  = UPDATES_RETURN=speed=1.4
+}
