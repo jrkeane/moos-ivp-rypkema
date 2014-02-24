@@ -18,6 +18,8 @@ ADD_SUBDIRECTORY(lib_behaviors-test)
 ADD_SUBDIRECTORY(pXRelayTest)
 ADD_SUBDIRECTORY(pExampleApp)
 ADD_SUBDIRECTORY(pOdometry)
+ADD_SUBDIRECTORY(pPrimeFactor)
+ADD_SUBDIRECTORY(pPrimeFactorTester)
 
 ##############################################################################
 #                           END of CMakeLists.txt
