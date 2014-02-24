@@ -1,0 +1,53 @@
+// Level 2 Configuration file: M. Benjamin
+
+ServerHost = localhost
+ServerPort = 9000
+Simulator  = true
+
+Community  = alder
+
+MOOSTimeWarp = 1
+
+LatOrigin  = 43.825300 
+LongOrigin = -70.330400 
+
+//------------------------------------------
+// Antler configuration  block
+ProcessConfig = ANTLER
+{
+  MSBetweenLaunches = 200
+
+  Run = MOOSDB			@ NewConsole = false
+  Run = pPrimeFactor		@ NewConsole = true
+  Run = pPrimeFactorTester	@ NewConsole = true
+  Run = uTimerScript 		@ NewConsole = false
+}
+
+//------------------------------------------
+// pPrimeFactor config block
+
+ProcessConfig = pPrimeFactor
+{
+  AppTick	= 4
+  CommsTick	= 4
+}
+
+ProcessConfig = pPrimeFactorTester
+{
+  AppTick	= 4
+  CommsTick	= 4
+}
+
+ProcessConfig = uTimerScript
+ {
+  AppTick   = 4
+  CommsTick = 4
+
+  paused     = false
+  event      = var=NUM_VALUE, val=$(15), time=0.25
+  event      = var=NUM_VALUE, val=$(9), time=0.50
+  event      = var=NUM_VALUE, val=$(7), time=0.75
+  event      = var=NUM_VALUE, val=$(5), time=1.00
+  reset_max  = nolimit
+  reset_time = all-posted
+}
