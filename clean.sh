@@ -9,3 +9,5 @@ rm -rf ./lib/*
 find ./bin/ -mindepth 1 ! -name "MOOSup.py" ! -name "MyGenMOOSApp" ! -name "README_MOOSup.py" -delete
 #remove all MOOSLog* folders
 find ./ -mindepth 1 -name "MOOSLog*" -type d -exec rm -rfv {} \;
+#remove all files in of type .moos++
+find ./ -mindepth 1 -name "*.moos++" -delete
