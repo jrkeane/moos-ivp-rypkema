@@ -1,0 +1,178 @@
+//--------    FILE: bravo.bhv   -------------
+
+initialize   DEPLOY = false
+initialize   RETURN = false
+initialize   LOITER_REGION = left
+initialize   SURFACE = false
+
+
+//----------------------------------------------
+Behavior = BHV_Timer
+{
+  name      = depth_timer
+  condition = DEPLOY = true
+  condition = SURFACE = false
+  duration  = 200
+  endflag   = SURFACE = true
+  perpetual = true
+  duration_status = TIMER_DIVE
+}
+
+Behavior = BHV_Timer
+{
+  name      = surface_timer
+  condition = DEPLOY = true
+  condition = NAV_DEPTH < 0.5
+  condition = SURFACE = true
+  duration  = 60
+  endflag   = SURFACE = false
+  perpetual = true
+  duration_status = TIMER_SURFACE
+}
+
+Behavior = BHV_ConstantDepth
+{ 
+  name      = surface_const_depth
+  pwt       = 100
+  condition = SURFACE = true
+  condition = DEPLOY = true
+  perpetual = true
+  duration  = no-time-limit
+
+  depth = 0
+}
+
+Behavior = BHV_ConstantSpeed
+{ 
+  name      = surface_const_speed
+  pwt       = 100
+  condition = SURFACE = true
+  condition = NAV_DEPTH < 0.5
+  condition = DEPLOY = true
+  perpetual = true
+  duration  = no-time-limit
+
+  speed = 0
+}
+
+
+//----------------------------------------------
+Behavior = BHV_Loiter
+{ 
+  name      = waypt_loiter
+  pwt       = 100
+  condition = LOITER_REGION = left
+  condition = SURFACE = false
+  condition = RETURN = false
+  condition = DEPLOY = true
+  endflag   = LOITER_REGION = right
+  UPDATES   = WPT_UPDATE
+  perpetual = true
+  duration  = 150
+  duration_status = TIMER_LOITER_WEST
+  duration_idle_decay = false
+
+           speed = 2.5   // meters per second
+         polygon = format=radial, x=100, y=-75, radius=30, pts=8, snap=1, label=Loiter
+          radius = 1
+     slip_radius = 2
+       clockwise = false
+    acquire_dist = 2
+
+    visual_hints = nextpt_color=red, nextpt_lcolor=green
+    visual_hints = vertex_color=blue, edge_color=pink
+    visual_hints = vertex_size=4, edge_size=1
+}
+
+Behavior = BHV_ConstantDepth
+{ 
+  name      = const_depth
+  pwt       = 100
+  condition = LOITER_REGION = left
+  condition = SURFACE = false
+  condition = RETURN = false
+  condition = DEPLOY = true
+  endflag   = LOITER_REGION = right
+  perpetual = true
+  duration  = no-time-limit
+
+  depth = 30
+}
+
+
+//----------------------------------------------
+Behavior = BHV_Loiter
+{
+//  name      = waypt_loiter_2 //DOESN'T WORK!!! - CANNOT USE A NAME THAT BEGINS WITH ANOTHER BEHAVIOUR NAME!!! 
+  name      = second_waypt_loiter
+  pwt       = 100
+  condition = LOITER_REGION = right
+  condition = SURFACE = false
+  condition = RETURN = false
+  condition = DEPLOY = true
+  endflag   = LOITER_REGION = left
+  perpetual = true
+  duration  = 150
+  duration_status = TIMER_LOITER_EAST
+  duration_idle_decay = false
+
+           speed = 2.5   // meters per second
+         polygon = format=radial, x=160, y=-50, radius=20, pts=8, snap=1, label=Loiter
+          radius = 1
+     slip_radius = 2
+    acquire_dist = 2
+
+    visual_hints = nextpt_color=red, nextpt_lcolor=green
+    visual_hints = vertex_color=blue, edge_color=pink
+    visual_hints = vertex_size=4, edge_size=1
+}
+
+Behavior = BHV_ConstantDepth
+{ 
+  name      = second_const_depth
+  pwt       = 100
+  condition = LOITER_REGION = right
+  condition = SURFACE = false
+  condition = RETURN = false
+  condition = DEPLOY = true
+  endflag   = LOITER_REGION = left
+  perpetual = true
+  duration  = no-time-limit
+
+  depth = 10
+}
+
+
+//----------------------------------------------
+Behavior=BHV_Waypoint
+{
+  name       = waypt_return
+  pwt        = 100
+  condition  = RETURN = true
+  condition  = DEPLOY = true
+  perpetual  = true
+  endflag    = RETURN = false
+  endflag    = DEPLOY = false
+  endflag    = MISSION = complete
+  updates    = RETURN_UPDATES
+
+           speed = 2.0
+  capture_radius = 2.0
+     slip_radius = 8.0
+          points = 0,0
+}
+
+Behavior = BHV_ConstantDepth
+{ 
+  name      = return_const_depth
+  pwt       = 100
+  condition = RETURN = true
+  condition = DEPLOY = true
+  endflag   = RETURN = false
+  endflag   = DEPLOY = false
+  endflag   = MISSION = complete
+  perpetual = true
+  duration  = no-time-limit
+
+  depth = 0
+}
