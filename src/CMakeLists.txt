@@ -20,6 +20,7 @@ ADD_SUBDIRECTORY(pExampleApp)
 ADD_SUBDIRECTORY(pOdometry)
 ADD_SUBDIRECTORY(pPrimeFactor)
 ADD_SUBDIRECTORY(pPrimeFactorTester)
+ADD_SUBDIRECTORY(pCommunicationAngle)
 
 ##############################################################################
 #                           END of CMakeLists.txt

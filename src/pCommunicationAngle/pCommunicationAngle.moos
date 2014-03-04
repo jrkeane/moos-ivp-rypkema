@@ -1,0 +1,20 @@
+//ServerHost = henrik.mit.edu
+//ServerPort = 9005
+ServerHost = localhost
+ServerPort = 9000
+Community  = spermwhale
+
+//------------------------------------------------
+// pCommunicationAngle config block
+
+ProcessConfig = pCommunicationAngle
+{
+   AppTick   = 4
+   CommsTick = 4
+   AppName = pCommunicationAngle_rypkema
+
+   surface_sound_speed = 1480
+   sound_speed_gradient = 0.016
+   water_depth = 6000
+   time_interval = 0.25
+}

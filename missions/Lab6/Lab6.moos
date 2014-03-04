@@ -1,0 +1,24 @@
+ServerHost = henrik.mit.edu
+ServerPort = 9005
+Community  = spermwhale
+
+//------------------------------------------
+// Antler configuration  block
+ProcessConfig = ANTLER
+{
+  MSBetweenLaunches = 200
+  Run = pCommunicationAngle		@ NewConsole = true ~pCommunicationAngle_rypkema
+}
+
+//------------------------------------------------
+// pCommunicationAngle config block
+ProcessConfig = pCommunicationAngle_rypkema
+{
+   AppTick   = 4
+   CommsTick = 4
+
+   surface_sound_speed = 1480
+   sound_speed_gradient = 0.016
+   water_depth = 6000
+   time_interval = 0.25
+}
