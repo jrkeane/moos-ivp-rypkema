@@ -1,0 +1,11 @@
+//----------------------------------------------------
+// pGenPath Configuration Block  (Created from Plugin)
+
+ProcessConfig = pGenPath
+{
+  AppTick    = 4
+  CommsTick  = 4
+
+  update_var = $(VNAME)_UPDATES_VAR
+  visit_radius = 5
+}
