@@ -1,7 +1,7 @@
 /************************************************************/
-/*    NAME:                                               */
+/*    NAME: Nick Rypkema                                    */
 /*    ORGN: MIT                                             */
-/*    FILE: PointAssign.cpp                                        */
+/*    FILE: PointAssign.cpp                                 */
 /*    DATE:                                                 */
 /************************************************************/
 
@@ -41,9 +41,11 @@ bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
   for(p=NewMail.begin(); p!=NewMail.end(); p++) {
     CMOOSMsg &msg = *p;
 
+    //get each point published, and assign corresponding point to correct vehicle
     if (MOOSStrCmp(msg.GetKey(), "VISIT_POINT")) {
       visit_point = msg.GetString();
 
+      //if it is the first point message, forward it to each vehicle
       if (MOOSStrCmp(visit_point, "firstpoint")) {
         for (unsigned int i=0; i<m_veh_vector.size(); i++) {
           publishString.str("");
@@ -52,6 +54,7 @@ bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
           m_Comms.Notify(publishString.str(), "firstpoint");
           m_veh_counter = 0;
         }
+      //if it is the last point message, forward it to each vehicle and flag that all points have been assigned
       } else if (MOOSStrCmp(visit_point, "lastpoint")) {
         for (unsigned int i=0; i<m_veh_vector.size(); i++) {
           publishString.str("");
@@ -60,6 +63,7 @@ bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
           m_Comms.Notify(publishString.str(), "lastpoint");
           m_pts_assigned = true;
         }
+      //otherwise, check if we assign points by region or by alternating, and send the points accordingly
       } else {
         publishString.str("");
         publishString.clear();
@@ -153,6 +157,7 @@ bool PointAssign::OnStartUp()
 
   m_timewarp = GetMOOSTimeWarp();
 
+  //get all vehicles and their names (needed to publish correct points to each vehicle)
   if (!m_MissionReader.GetConfigurationParam("vname", m_veh_list)) {
     cerr << "No vehicle names specified! Quitting!" << endl;
     return(false);
@@ -162,6 +167,7 @@ bool PointAssign::OnStartUp()
   for(unsigned int i=0; i<m_veh_vector.size(); i++) m_veh_vector[i] = stripBlankEnds(m_veh_vector[i]);
   m_num_vehicles = m_veh_vector.size();
 
+  //get the region in which the points can exist
   if (!m_MissionReader.GetConfigurationParam("region", m_region_str)) {
     cerr << "No region specified! Quitting!" << endl;
     return(false);
@@ -170,6 +176,7 @@ bool PointAssign::OnStartUp()
   vector<string> m_region_vec = parseString(m_region_str, ',');
   for(unsigned int i=0; i<m_region_vec.size(); i++) m_region.push_back(atof(stripBlankEnds(m_region_vec[i]).c_str()));
 
+  //get the check if we should assign points by region
   string region_assign;
   if (!m_MissionReader.GetConfigurationParam("assign_by_region", region_assign)) {
     cerr << "No region sorting specified! Quitting!" << endl;

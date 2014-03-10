@@ -45,7 +45,7 @@ Processconfig = ANTLER
  ProcessConfig = pPointAssign                                    
  {                                                               
   vname = GILDA,HENRY
-  assign_by_region = true
+  assign_by_region = false
   region = -25,200,-175,-25
  }  
 

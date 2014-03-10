@@ -42,29 +42,35 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
     if (MOOSStrCmp(msg.GetKey(), "VISIT_POINT")) {
       visit_point = msg.GetString();
 
+      //if its the firstpoint flag, init variables by clearing
       if (MOOSStrCmp(visit_point, "firstpoint")) {
         m_x_pts.clear();
         m_y_pts.clear();
         m_got_all_pts = false;
         m_assigned_pts = false;
         m_pt_counter = 0;
+      //if its the laspoint flag, flag that we have received all points so that we can calculate tour
       } else if (MOOSStrCmp(visit_point, "lastpoint")) {
         for (unsigned int i=0; i<m_x_pts.size(); i++) {
           cout << m_x_pts[i] << "," << m_y_pts[i] << "," << m_id_pts[i] << endl;
         }
         m_got_all_pts = true;
         m_num_pts = m_x_pts.size();
+      //otherwise, parse the point string and push it onto our position vectors
       } else {
         m_x_pts.push_back(atof(tokStringParse(visit_point, "x", ',', '=').c_str()));
         m_y_pts.push_back(atof(tokStringParse(visit_point, "y", ',', '=').c_str()));
         m_id_pts.push_back(atoi(tokStringParse(visit_point, "id", ',', '=').c_str()));
       }
+    //get x pos
     } else if (MOOSStrCmp(msg.GetKey(), "NAV_X")) {
       m_x_pos = msg.GetDouble();
       m_received_pos = true;
+    //get y pos
     } else if (MOOSStrCmp(msg.GetKey(), "NAV_Y")) {
       m_y_pos = msg.GetDouble();
       m_received_pos = true;
+    //get the current waypoint of the path from the waypoint bhv
     } else if (MOOSStrCmp(msg.GetKey(), "WPT_INDEX")) {
       m_received_wpt_idx = true;
       unsigned int new_wpt = (unsigned int)msg.GetDouble();
@@ -75,12 +81,14 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
       if (m_wpt_idx > 0) {
         cout << "Distance to prev point: " << m_wpt_dist << endl;
         cout << m_x_pts_missed.size() << endl;
+        //perform a check to see if we actually visited the previous point
         if (m_wpt_dist > m_visit_radius) {
           m_x_pts_missed.push_back(m_x_pts_ordered[m_wpt_idx-1]);
           m_y_pts_missed.push_back(m_y_pts_ordered[m_wpt_idx-1]);
           m_id_pts_missed.push_back(m_id_pts_ordered[m_wpt_idx-1]);
         }
       }
+    //bhv may request a regeneration of the tour for any missed points
     } else if (MOOSStrCmp(msg.GetKey(), "GENPATH_REGENERATE")) {
       m_regen_path = true;
     }
@@ -122,13 +130,16 @@ bool GenPath::Iterate()
 {
   m_iterations++;
 
+  //we have received all points, we havent assigned them, and we have vehicle nav info
   if ((m_got_all_pts) and (!m_assigned_pts) and (m_received_pos)) {
     double curr_x = m_x_pos;
     double curr_y = m_y_pos;
     unsigned int curr_id = 0;
+    //loop through all received points, and do a greedy tour of the points (shortest distance from each point to the next) O(n^2)
     while (m_pt_counter < m_num_pts) {
       int shortest_pt_idx = -1;
       double shortest_dist = -1;
+      //check remaining points for the closest one
       for (unsigned int i=0; i<m_x_pts.size(); i++) {
         double distance = sqrt(pow(curr_x-m_x_pts[i],2)+pow(curr_y-m_y_pts[i],2));
         cout << i << " " << m_id_pts[i] << ": " << distance << " | " << curr_id << ": " << shortest_dist << endl;
@@ -137,6 +148,7 @@ bool GenPath::Iterate()
           shortest_pt_idx = i;
         }
       }
+      //update our current point, and remove it from the list of points that have not been assigned
       curr_x = m_x_pts[shortest_pt_idx];
       curr_y = m_y_pts[shortest_pt_idx];
       curr_id = m_id_pts[shortest_pt_idx];
@@ -149,15 +161,18 @@ bool GenPath::Iterate()
       m_id_pts.erase(m_id_pts.begin()+shortest_pt_idx);
       m_pt_counter++;
     }
+    //sanity check on the point ordering
     cout << "ordered points" << endl;
     for (unsigned int i=0; i<m_x_pts_ordered.size(); i++) {
       cout << m_id_pts_ordered[i] << ": " << m_x_pts_ordered[i] << "," << m_y_pts_ordered[i] << endl;
     }
+    //if we have points to visit, publish the tour to the bhv update variable
     if (m_num_pts > 0) {
       m_assigned_pts = true;
       string update_string = "points = ";
       update_string += m_seglist.get_spec();
       m_Comms.Notify(m_update_var, update_string);
+      //if we have performed this assignment as a result of a regeneration request, tell vehicle to redeploy on regenerated tour
       if (m_regen_path) {
         m_regen_path = false;
         m_Comms.Notify("DEPLOY", "true");
@@ -168,10 +183,12 @@ bool GenPath::Iterate()
     }
   }
 
+  //once we have a waypoint of the tour, continually calculate the distance to the current waypoint
   if (m_received_wpt_idx) {
     m_wpt_dist = sqrt(pow(m_x_pos-m_x_pts_ordered[m_wpt_idx],2)+pow(m_y_pos-m_y_pts_ordered[m_wpt_idx],2));
   }
 
+  //if we a regeneration has been requested, clear our calculated path, and regenerate a new one (in the above loop) using the vector of missed points
   if (m_regen_path) {
     m_received_wpt_idx = false;
     m_assigned_pts = false;
@@ -219,11 +236,13 @@ bool GenPath::OnStartUp()
 
   m_timewarp = GetMOOSTimeWarp();
 
+  //get the name of the update variable for wpt bhv
   if (!m_MissionReader.GetConfigurationParam("update_var", m_update_var)) {
     cerr << "No update variable specified! Quitting!" << endl;
     return(false);
   }
 
+  //get the radius that certifies visitation of a point
   if (!m_MissionReader.GetConfigurationParam("visit_radius", m_visit_radius)) {
     cerr << "No visit radius specified! Quitting!" << endl;
     return(false);
