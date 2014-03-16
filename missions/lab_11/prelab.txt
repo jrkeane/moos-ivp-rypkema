@@ -1,0 +1,15 @@
+2.
+a) The primary advantages of arithmetic source encoding include: flexibility (given a model with sequence of event
+probabilities, arithmetic coding can be used); optimality (optimal in theory and very nearly optimal in practice)
+b) the primary disadvantages of arithmetic source encoding include: speed (tends to be slow to encode); does not produce
+a prefix code (disallowing parallel processing); poor error resistance
+c) This encoding scheme makes sense for marine robotics because most messages are repetitive (i.e. symbol probabilities
+are well known), we desire optimality (the high cost of underwater communications means we wish to compress as much
+information into a single message as possible), and speed is not much of an issue (since we cannot send many messages at
+once anyway)
+
+3.
+b)  i. In a way, Google Protobuf messages and C++ classes are directly analagous - a message is defined by a set of
+internal variables, from which a set of getter, setter, and checker methods are automatically produced; this is much the
+same as a C++ class, where we can define internal variables and class methods.
+ii. set_temperature(21.435);
