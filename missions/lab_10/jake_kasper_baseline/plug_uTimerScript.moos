@@ -1,0 +1,13 @@
+ProcessConfig = uTimerScript
+ {
+   AppTick    = 2
+   CommsTick  = 2
+
+   condition  = EXCHANGE_WAIT=true
+   // THE BELOW EVENT ALL ON ONE LINE IN THE ACTUAL MOOS FILE
+
+   event      = var=HAZARDSET_REQUEST, val="true", time=1
+
+   reset_max = nolimit
+   reset_time = all-posted
+ }
