@@ -1,0 +1,7 @@
+1. 
+a) size of DCCL message: 6 bytes; bitrate of link 25.6bps=3.2Bps; therefore min interval to send 6 bytes is 6/3.2=1.875 seconds; max_queue needed at this interval is x (every 10 seconds) (every 1.875 seconds the entire 6 bytes is sent)
+b) latency between messages is ~2/3 seconds; plus some messages are not received, as messages from two sources are sent at the same time; you can either stagger messages to be sent at different times, or use two receivers set at different frequencies
+c) positional/navigation information is a good example where the latest message to be sent should be prioritized (sent first), as as it is important for both operational safety and monitoring; messages that have some form of temporaral or spatial pattern may be better suited to be sent in order so as to make better sense of the data topside
+
+2.
+Assuming uniform probability of sending a message within the range (0,32768), the probability that the varint codec is worthwhile is simply ((32678-128)-128)/32768=0.98944
