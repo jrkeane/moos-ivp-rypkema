@@ -6,6 +6,7 @@ initialize   SURVEY  = false
 initialize   SURVEY2  = false
 initialize   SURVEY3  = false
 initialize   STATION = false
+initialize   STOP_VEHICLE = false
 
 Set MODE = ACTIVE {
   DEPLOY = true
@@ -19,7 +20,7 @@ set MODE = STATION-KEEPING {
 set MODE = RETURNING {
   MODE = ACTIVE
   RETURN = true
-} SURVEYING
+}
 
 
 //----------------------------------------------
@@ -57,10 +58,13 @@ Behavior = BHV_StationKeep
 
 //----------------------------------------------
 Behavior = BHV_Waypoint
-{ 
+{
   name      = waypt_survey
   pwt       = 100
+  condition = RETURN = false
   condition = SURVEY = true
+  condition = STOP_VEHICLE = false
+  endflag   = SURVEY = false
   endflag   = SURVEY2 = true
   perpetual = true
 
@@ -71,16 +75,16 @@ Behavior = BHV_Waypoint
 
 
 #ifdef VNAME jake
-	//case 1: 5,10
+	//case 1: 5,10 - 15
 	//points = format=lawnmower,label=kaspersearch,x=125,y=-247.5,height=295,width=550,lane_width=30,rows=ew,degs=0
-	//case 2: 10,10
-	points = format=lawnmower,label=kaspersearch,x=125,y=-207.5,height=285,width=550,lane_width=40,rows=ew,degs=0
-	//case 3: 5,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
-	//case 4: 10,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
-	//case 5: 25,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-247.5,height=295,width=550,lane_width=30,rows=ew,degs=0
+	//case 2: 10,10 - 20
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-210,height=285,width=550,lane_width=40,rows=ew,degs=0
+	//case 3: 5,25 - 30
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-252.5,height=265,width=550,lane_width=60,rows=ew,degs=0
+	//case 4: 10,25 - 35
+	points = format=lawnmower,label=kaspersearch,x=125,y=-252.5,height=255,width=550,lane_width=70,rows=ew,degs=0
+	//case 5: 25,25 - 50
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-212.5,height=225,width=550,lane_width=100,rows=ew,degs=0
 	//case 6: 5,25
 	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=550,lane_width=25,rows=ew,degs=0
   visual_hints = vertex_color=yellow, edge_color=green
@@ -88,18 +92,18 @@ Behavior = BHV_Waypoint
 	//case 1: 5,10
 	//points = format=lawnmower,label=kaspersearch,x=125,y=-232.5,height=295,width=550,lane_width=30,rows=ew,degs=0
 	//case 2: 10,10
-	points = format=lawnmower,label=kaspersearch,x=125,y=-227.5,height=285,width=550,lane_width=40,rows=ew,degs=0:
-	//points = format=lawnmower,label=kaspersearch,x=1250,y=-2470.5,height=285,width=550,lane_width=40,rows=ew,degs=0	
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-230,height=285,width=550,lane_width=40,rows=ew,degs=0
 	//case 3: 5,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-222.5,height=265,width=550,lane_width=60,rows=ew,degs=0
 	//case 4: 10,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
+	points = format=lawnmower,label=kaspersearch,x=125,y=-217.5,height=255,width=550,lane_width=70,rows=ew,degs=0
 	//case 5: 25,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-232.5,height=295,width=550,lane_width=30,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-262.5,height=225,width=550,lane_width=100,rows=ew,degs=0
   visual_hints = vertex_color=yellow, edge_color=gray25
 #endif
 
-       endflag = NODE_MESSAGE = src_node=$(VNAME),dest_node=all,var_name=SURVEY,string_val=COMPLETE
+       //endflag = NODE_MESSAGE = src_node=$(VNAME),dest_node=all,var_name=SURVEY,string_val=COMPLETE
+       endflag = SEARCH_REPS = true
 
          order = normal
         repeat = 0
@@ -132,13 +136,14 @@ Behavior = BHV_Waypoint
 
 //----------------------------------------------
 Behavior = BHV_Waypoint
-{ 
+{
   name      = srvy2
   pwt       = 100
-  condition = MODE==SURVEYING
+  condition = RETURN = false
   condition = SURVEY2 = true
+  condition = STOP_VEHICLE = false
   endflag   = SURVEY2 = false
-  endflag   = SURVEY3 = true
+  endflag   = SURVEY = true
   perpetual = true
 
          speed = 2   // meters per second
@@ -149,36 +154,36 @@ Behavior = BHV_Waypoint
 
 #ifdef VNAME jake
 	//case 1: 5,10
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-247.5,height=295,width=550,lane_width=30,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-232.5,height=295,width=550,lane_width=30,rows=ew,degs=0
 	//case 2: 10,10
-	points = format=lawnmower,label=kaspersearch,x=125,y=-207.5,height=285,width=550,lane_width=40,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-230,height=285,width=550,lane_width=40,rows=ew,degs=0
 	//case 3: 5,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-222.5,height=265,width=550,lane_width=60,rows=ew,degs=0
 	//case 4: 10,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
+	points = format=lawnmower,label=kaspersearch,x=125,y=-217.5,height=255,width=550,lane_width=70,rows=ew,degs=0
 	//case 5: 25,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-247.5,height=295,width=550,lane_width=30,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-262.5,height=225,width=550,lane_width=100,rows=ew,degs=0
 	//case 6: 5,25
 	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=550,lane_width=25,rows=ew,degs=0
   visual_hints = vertex_color=yellow, edge_color=green
 #elseifdef VNAME kasper
 	//case 1: 5,10
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-232.5,height=295,width=550,lane_width=30,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-247.5,height=295,width=550,lane_width=30,rows=ew,degs=0
 	//case 2: 10,10
-	points = format=lawnmower,label=kaspersearch,x=125,y=-227.5,height=285,width=550,lane_width=40,rows=ew,degs=0:
-	//points = format=lawnmower,label=kaspersearch,x=1250,y=-2470.5,height=285,width=550,lane_width=40,rows=ew,degs=0	
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-210,height=285,width=550,lane_width=40,rows=ew,degs=0
 	//case 3: 5,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-252.5,height=265,width=550,lane_width=60,rows=ew,degs=0
 	//case 4: 10,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
+	points = format=lawnmower,label=kaspersearch,x=125,y=-252.5,height=255,width=550,lane_width=70,rows=ew,degs=0
 	//case 5: 25,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-232.5,height=295,width=550,lane_width=30,rows=ew,degs=0
+	//points = format=lawnmower,label=kaspersearch,x=125,y=-212.5,height=225,width=550,lane_width=100,rows=ew,degs=0
   visual_hints = vertex_color=yellow, edge_color=gray25
 #endif
 
-         order = reverse
-       endflag = NODE_MESSAGE = src_node=$(VNAME),dest_node=all,var_name=SURVEY,string_val=COMPLETE
+       //endflag = NODE_MESSAGE = src_node=$(VNAME),dest_node=all,var_name=SURVEY,string_val=COMPLETE
+       endflag = SEARCH_REPS = true
 
+         order = reverse
         repeat = 0
   visual_hints = nextpt_color=red, nextpt_lcolor=green
   visual_hints = vertex_size=1, edge_size=1
@@ -189,61 +194,18 @@ Behavior = BHV_Waypoint
 }
 
 //----------------------------------------------
-Behavior = BHV_Waypoint
-{ 
-  name      = srvy3
+Behavior = BHV_StationKeep
+{
+  name      = stop-keep
   pwt       = 100
-  condition = MODE==SURVEYING
-  condition = SURVEY3 = true
-  endflag   = SURVEY3 = false
-  endflag   = RETURN = true
-  perpetual = true
+  condition = STOP_VEHICLE=true
 
-         speed = 2   // meters per second
-        radius = 5.0
-   slip_radius = 15.0
-          lead = 15
+     center_activate = true
+        inner_radius = 5
+        outer_radius = 10
+         outer_speed = 1.0
 
-
-#ifdef VNAME jake
-	//case 1: 5,10
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-247.5,height=295,width=550,lane_width=30,rows=ew,degs=0
-	//case 2: 10,10
-	points = format=lawnmower,label=kaspersearch,x=125,y=-207.5,height=285,width=550,lane_width=40,rows=ew,degs=0
-	//case 3: 5,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
-	//case 4: 10,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
-	//case 5: 25,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-247.5,height=295,width=550,lane_width=30,rows=ew,degs=0
-	//case 6: 5,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=550,lane_width=25,rows=ew,degs=0
-  visual_hints = vertex_color=yellow, edge_color=green
-#elseifdef VNAME kasper
-	//case 1: 5,10
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-232.5,height=295,width=550,lane_width=30,rows=ew,degs=0
-	//case 2: 10,10
-	points = format=lawnmower,label=kaspersearch,x=125,y=-227.5,height=285,width=550,lane_width=40,rows=ew,degs=0:
-	//points = format=lawnmower,label=kaspersearch,x=1250,y=-2470.5,height=285,width=550,lane_width=40,rows=ew,degs=0	
-	//case 3: 5,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
-	//case 4: 10,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-237.5,height=325,width=570,lane_width=25,rows=ew,degs=0
-	//case 5: 25,25
-	//points = format=lawnmower,label=kaspersearch,x=125,y=-232.5,height=295,width=550,lane_width=30,rows=ew,degs=0
-  visual_hints = vertex_color=yellow, edge_color=gray25
-#endif
-
-         order = normal
-       endflag = NODE_MESSAGE = src_node=$(VNAME),dest_node=all,var_name=SURVEY,string_val=COMPLETE
-
-        repeat = 0
-  visual_hints = nextpt_color=red, nextpt_lcolor=green
-  visual_hints = vertex_size=1, edge_size=1
-
-
-//	points = -200,-130:-90,-420:-57,-402:-170,-120:-129,-104:-22,-388:20,-370:-84,-85:-42,-69:59,-354:100,-339:-2,-53:39,-34:140,-322:175,-311:80,-23:121,-7:216,-290:256,-275:167,3:203,14:296,-260:330,-244:244,6
-
+       transit_speed = 1.3
+          swing_time = 7
+        visual_hints = vertex_size=0, edge_color=gray50
 }
-
-

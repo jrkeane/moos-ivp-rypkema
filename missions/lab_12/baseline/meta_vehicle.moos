@@ -6,12 +6,12 @@ Simulator  = true
 Community  = $(VNAME)
 
 #include plug_origin_warp.moos
-  
+
 //------------------------------------------------------------
 Processconfig = ANTLER
 {
   MSBetweenLaunches = 100
-   
+
   Run = MOOSDB             @ NewConsole = false
   Run = uSimMarine         @ NewConsole = false
   Run = pLogger            @ NewConsole = false
@@ -24,10 +24,27 @@ Processconfig = ANTLER
   Run = pHostInfo          @ NewConsole = false
   Run = uFldNodeBroker     @ NewConsole = false
   Run = uFldMessageHandler @ NewConsole = false
-  Run = uFldHazardMgrX     @ NewConsole = false
+  Run = uFldHazardMgrX     @ NewConsole = true
   Run = uXMS               @ NewConsole = false
+  Run = uTimerScript       @ NewConsole = false
+  //Run = uTimerScript       @ NewConsole = false ~ uTimerScript2
 }
-  
+
+ProcessConfig = uTimerScript
+{
+  paused = false
+  event = var=CLEAR_FOR_SHARE, val="true", time=61
+  reset_time = end
+}
+
+//ProcessConfig = uTimerScript2
+//{
+//  paused = true
+//  pause_var = TOGGLE_TIMER
+//  event = var=SEARCH_TIME, val="true", time=1
+//  reset_time = end
+//}
+
 //------------------------------------------------------------
 Processconfig = uXMS
 {
