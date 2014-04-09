@@ -26,6 +26,7 @@
 #include "MOOS/libMOOS/Thirdparty/AppCasting/AppCastingMOOSApp.h"
 #include "XYHazardSet.h"
 #include "XYPolygon.h"
+#include <map>
 
 class HazardMgr : public AppCastingMOOSApp
 {
@@ -33,29 +34,31 @@ class HazardMgr : public AppCastingMOOSApp
    HazardMgr();
    ~HazardMgr() {};
 
- protected: // Standard MOOSApp functions to overload  
+ protected: // Standard MOOSApp functions to overload
    bool OnNewMail(MOOSMSG_LIST &NewMail);
    bool Iterate();
    bool OnConnectToServer();
    bool OnStartUp();
 
- protected: // Standard AppCastingMOOSApp function to overload 
-   bool buildReport();
+ protected: // Standard AppCastingMOOSApp function to overload
+   //bool buildReport();
 
  protected: // Registration, Configuration, Mail handling utils
    void registerVariables();
    bool handleMailSensorConfigAck(std::string);
-   bool handleMailSensorOptionsSummary(std::string) {return(true);};
+   bool handleMailSensorOptionsSummary(std::string);
    bool handleMailDetectionReport(std::string);
-   bool handleMailHazardReport(std::string) {return(true);};
+   bool handleMailHazardReport(std::string);
+   void handleSendHazardReport();
+   void handleReceiveHazardReport(std::string);
    void handleMailReportRequest();
    void handleMailMissionParams(std::string);
 
- protected: 
+ protected:
    void postSensorConfigRequest();
    void postSensorInfoRequest();
    void postHazardSetReport();
-   
+
  private: // Configuration variables
    double      m_swath_width_desired;
    double      m_pd_desired;
@@ -78,9 +81,28 @@ class HazardMgr : public AppCastingMOOSApp
 
    XYHazardSet m_hazard_set;
    XYPolygon   m_search_region;
-   
+
    double      m_transit_path_width;
+   std::map<int, std::pair<int, int> > m_classifications;
+//   std::map<int, std::pair<int, int> > m_combined_classifications;
+   std::map<int, std::pair<int, int> >::const_iterator m_class_iter;
+//   std::map<int, std::pair<int, int> >::const_iterator m_class_comb_iter;
+   std::vector<int> m_updates;
+   int m_repeats;
+   bool m_options_set;
+   double m_max_time;
+   unsigned int m_hazard_reports;
+   XYHazardSet m_voted_hazard_set;
+   double m_deploy_time;
+   double m_rep_time;
+   bool m_deployed;
+   double m_traverse_time;
+   double m_search_time;
+   double m_total_time;
+   double m_addit_ratio;
+   int m_report_count;
+   int test;
 };
 
-#endif 
+#endif
 

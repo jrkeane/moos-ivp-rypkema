@@ -33,7 +33,7 @@ using namespace std;
 //---------------------------------------------------------
 // Constructor
 
-HazardMgr::HazardMgr()
+HazardMgr::HazardMgr() : m_repeats(0), m_max_time(0.0), m_options_set(false), m_hazard_reports(0), m_deploy_time(0), m_deployed(false), m_traverse_time(0), m_search_time(0), m_total_time(0), m_report_count(0)
 {
   // Config variables
   m_swath_width_desired = 25;
@@ -87,14 +87,45 @@ bool HazardMgr::OnNewMail(MOOSMSG_LIST &NewMail)
     else if(key == "HAZARDSET_REQUEST")
       handleMailReportRequest();
 
-    else if(key == "UHZ_MISSION_PARAMS")
-      handleMailMissionParams(sval);
+    else if(key == "UHZ_HAZARD_REPORT")
+      handleMailHazardReport(sval);
 
-    else if(key == "HAZARDREPORT_OTHER") {
-      m_hazard_set.findMinXPath(20);
-      string summary_report = m_hazard_set.getSpec("final_report");
+    else if(key == "CLEAR_FOR_SHARE") {
+      handleSendHazardReport();
+    }
 
-      Notify("HAZARDSET_REPORT", summary_report+sval);
+    else if(key == "SHARED_DATA") {
+      handleReceiveHazardReport(sval);
+    }
+
+    else if(key == "DEPLOY") {
+      if (sval=="true") {
+        m_deployed = true;
+        m_deploy_time = MOOSTime();
+        m_rep_time = MOOSTime();
+      }
+    }
+
+    else if(key == "UHZ_MISSION_PARAMS") {
+      if (!m_options_set) {
+        handleMailMissionParams(sval);
+        m_options_set = true;
+      }
+    }
+
+//    else if(key == "HAZARDREPORT_OTHER") {
+//      //m_hazard_set.findMinXPath(20);
+//      string summary_report = m_hazard_set.getSpec("final_report");
+//
+//      Notify("HAZARDSET_REPORT", summary_report+sval);
+//    }
+
+    else if(key == "SEARCH_REPS") {
+      if (m_traverse_time == 0) {
+        m_traverse_time = m_search_time;
+      }
+      m_rep_time = MOOSTime();
+      m_repeats++;
     }
 
     else
@@ -102,6 +133,110 @@ bool HazardMgr::OnNewMail(MOOSMSG_LIST &NewMail)
   }
 
    return(true);
+}
+
+bool HazardMgr::handleMailSensorOptionsSummary(string str) {
+  return true;
+}
+
+void HazardMgr::handleReceiveHazardReport(string str) {
+  string temp_hazlabel;
+  string temp_countfor;
+  string temp_countagainst;
+  int temp_existfor;
+  int temp_existagainst;
+//  m_combined_classifications = m_classifications;
+  for ( int i = 0; i < str.length(); ++i )
+  {
+      temp_hazlabel += str[i];
+      if (temp_hazlabel.length() == 3)
+      {
+        temp_countfor = str[i+1];
+        temp_countagainst = str[i+2];
+        i = i+2;
+        if (m_classifications.find(atoi(temp_hazlabel.c_str())) == m_classifications.end()) {
+          m_classifications[atoi(temp_hazlabel.c_str())] = make_pair(atoi(temp_countfor.c_str()),atoi(temp_countagainst.c_str()));
+        } else {
+//          temp_existfor = m_classifications[atoi(temp_hazlabel.c_str())].first;
+//          temp_existagainst = m_classifications[atoi(temp_hazlabel.c_str())].second;
+//          m_classifications[atoi(temp_hazlabel.c_str())] = make_pair(atoi(temp_countfor.c_str())+temp_existfor,atoi(temp_countagainst.c_str())+temp_existagainst);
+            m_classifications[atoi(temp_hazlabel.c_str())] = make_pair(atoi(temp_countfor.c_str()),atoi(temp_countagainst.c_str()));
+        }
+//        cout << "LABEL: " << temp_hazlabel << " FOR:" << temp_countfor << " AGAINST:" << temp_countagainst << endl;
+        temp_hazlabel = "";
+        temp_countfor = "";
+        temp_countagainst = "";
+      }
+  }
+
+  for (m_class_iter = m_classifications.begin(); m_class_iter != m_classifications.end(); ++m_class_iter) {
+    cout << "COMBINED KEY: " << m_class_iter->first << " VOTES: for=" << m_class_iter->second.first << " against=" << m_class_iter->second.second << endl;
+  }
+  cout << endl;
+}
+
+void HazardMgr::handleSendHazardReport() {
+  string share_message = "";
+//  for (m_class_iter = m_classifications.begin(); m_class_iter != m_classifications.end(); ++m_class_iter) {
+//    cout << "KEY: " << m_class_iter->first << " VOTES: for=" << m_class_iter->second.first << " against=" << m_class_iter->second.second << endl;
+  for(unsigned int i = 0; i < m_updates.size(); i++) {
+//    cout << "KEY: " << m_updates[i] << " VOTES: for=" << m_classifications[m_updates[i]].first << " against=" << m_classifications[m_updates[i]].second << endl;
+    stringstream m_message;
+    m_message << m_updates[i];
+    if (m_message.str().size() == 1) {
+      m_message.str("");
+      m_message.clear();
+      m_message << "00" << m_updates[i];
+    } else if (m_message.str().size() == 2) {
+      m_message.str("");
+      m_message.clear();
+      m_message << "0" << m_updates[i];
+    }
+    m_message << m_classifications[m_updates[i]].first << m_classifications[m_updates[i]].second;
+    share_message += m_message.str();
+  }
+  NodeMessage node_message;
+  node_message.setSourceNode(m_host_community);
+  node_message.setDestNode("all");
+  node_message.setVarName("SHARED_DATA");
+  node_message.setStringVal(share_message);
+  string msg = node_message.getSpec();
+  if (share_message.size()>0)
+    Notify("NODE_MESSAGE_LOCAL", msg);
+  m_updates.clear();
+}
+
+bool HazardMgr::handleMailHazardReport(string str) {
+  m_hazard_reports++;
+
+  XYHazard new_hazard = string2Hazard(str);
+  string hazlabel = new_hazard.getLabel();
+  string haztype = new_hazard.getType();
+  if (m_classifications.find(atoi(hazlabel.c_str())) == m_classifications.end()) {
+    m_classifications[atoi(hazlabel.c_str())] = make_pair(0,0);
+  }
+  if (haztype == "hazard") {
+    m_classifications[atoi(hazlabel.c_str())].first++;
+  } else {
+    m_classifications[atoi(hazlabel.c_str())].second++;
+  }
+
+  if(std::find(m_updates.begin(), m_updates.end(), atoi(hazlabel.c_str())) != m_updates.end()) {
+      return(true);
+  } else {
+      m_updates.push_back(atoi(hazlabel.c_str()));
+  }
+
+//  for(int i=0; i < m_updates.size(); i++){
+//   cout << "A: ";
+//   cout << m_updates[i] << endl;
+//  }
+
+//  for (m_class_iter = m_classifications.begin(); m_class_iter != m_classifications.end(); ++m_class_iter) {
+//    cout << "KEY: " << m_class_iter->first << " VOTES: for=" << m_class_iter->second.first << " against=" << m_class_iter->second.second << endl;
+//  }
+
+  return(true);
 }
 
 //---------------------------------------------------------
@@ -120,6 +255,19 @@ bool HazardMgr::OnConnectToServer()
 bool HazardMgr::Iterate()
 {
   AppCastingMOOSApp::Iterate();
+
+  if (m_deployed) {
+    m_total_time = MOOSTime() - m_deploy_time;
+    m_search_time = MOOSTime() - m_rep_time;
+  }
+
+  if (m_max_time-m_total_time < 100) {
+    Notify("STOP_VEHICLE", "true");
+    if (m_report_count < 2) {
+      handleMailReportRequest();
+      m_report_count++;
+    }
+  }
 
   if(!m_sensor_config_requested)
     postSensorConfigRequest();
@@ -180,6 +328,10 @@ bool HazardMgr::OnStartUp()
   m_hazard_set.setName(m_report_name);
   m_hazard_set.setRegion(m_search_region);
 
+  m_voted_hazard_set.setSource(m_host_community);
+  m_voted_hazard_set.setName(m_report_name);
+  m_voted_hazard_set.setRegion(m_search_region);
+
   registerVariables();
   return(true);
 }
@@ -196,6 +348,12 @@ void HazardMgr::registerVariables()
   m_Comms.Register("UHZ_MISSION_PARAMS", 0);
   m_Comms.Register("HAZARDSET_REQUEST", 0);
   m_Comms.Register("HAZARDREPORT_OTHER", 0);
+  m_Comms.Register("SEARCH_REPS", 0);
+  m_Comms.Register("UHZ_HAZARD_REPORT", 0);
+  m_Comms.Register("CLEAR_FOR_SHARE", 0);
+  m_Comms.Register("SHARED_DATA", 0);
+  m_Comms.Register("DEPLOY", 0);
+  m_Comms.Register("SEARCH_TIME", 0);
 }
 
 //---------------------------------------------------------
@@ -321,25 +479,61 @@ void HazardMgr::handleMailReportRequest()
 {
   m_summary_reports++;
 
-  m_hazard_set.findMinXPath(20);
-  //unsigned int count    = m_hazard_set.findMinXPath(20);
-  string summary_report = m_hazard_set.getSpec("final_report");
+  stringstream label;
+  double votes_for;
+  double votes_against;
+  double num_reps;
+  int num_detects;
+  if (m_traverse_time > 0) {
+    num_reps = m_repeats+(m_search_time/m_traverse_time);
+  } else {
+    num_reps = 1;
+  }
+  for (m_class_iter = m_classifications.begin(); m_class_iter != m_classifications.end(); ++m_class_iter) {
+    label << m_class_iter->first;
+    num_detects = (m_class_iter->second.first + m_class_iter->second.second);
+    votes_for = num_detects + m_class_iter->second.first;
+    if (num_reps > num_detects) {
+      votes_against = num_reps - num_detects + m_class_iter->second.second;
+    } else {
+      votes_against = m_class_iter->second.second;
+    }
 
-  Notify("HAZARDSET_REPORT", summary_report);
+    if (votes_for >= votes_against) {
+      XYHazard new_hazard = string2Hazard("label="+label.str()+",type=hazard");
+      string hazlabel = new_hazard.getLabel();
+      int ix = m_voted_hazard_set.findHazard(hazlabel);
+      if(ix == -1)
+        m_voted_hazard_set.addHazard(new_hazard);
+      else
+        m_voted_hazard_set.setHazard(ix, new_hazard);
+    }
 
-  NodeMessage node_message;
+    string summary_report = m_voted_hazard_set.getSpec("final_report");
+    Notify("HAZARDSET_REPORT", summary_report);
 
-  node_message.setSourceNode(m_host_community);
-  node_message.setDestNode("all");
-  node_message.setVarName("HAZARDREPORT_OTHER");
-  node_message.setStringVal(summary_report);
+    cout << "COMBINED KEY: " << m_class_iter->first << " VOTES: for=" << m_class_iter->second.first << " against=" << m_class_iter->second.second << endl;
+    cout << "COMBINED KEY CALC: " << m_class_iter->first << " VOTES: for=" << votes_for << " against=" << votes_against << endl;
+    label.str("");
+    label.clear();
+  }
 
-  string msg = node_message.getSpec();
-
-  Notify("NODE_MESSAGE_LOCAL", msg);
-
-//  string hazard_report_share = "src_node="+m_host_community+",dest_node=all,var_name=HAZARD_OTHER,string_val=\"-"+summary_report+"-\"";
-//  Notify("NODE_MESSAGE_LOCAL", hazard_report_share);
+//  m_hazard_set.findMinXPath(20);
+//  //unsigned int count    = m_hazard_set.findMinXPath(20);
+//  string summary_report = m_hazard_set.getSpec("final_report");
+//
+//  Notify("HAZARDSET_REPORT", summary_report);
+//
+//  NodeMessage node_message;
+//
+//  node_message.setSourceNode(m_host_community);
+//  node_message.setDestNode("all");
+//  node_message.setVarName("HAZARDREPORT_OTHER");
+//  node_message.setStringVal(summary_report);
+//
+//  string msg = node_message.getSpec();
+//
+//  Notify("NODE_MESSAGE_LOCAL", msg);
 }
 
 
@@ -361,6 +555,9 @@ void HazardMgr::handleMailMissionParams(string str)
   for(i=0; i<vsize; i++) {
     string param = biteStringX(svector[i], '=');
     string value = svector[i];
+    if (param=="max_time") {
+      m_max_time = atof(value.c_str());
+    }
     // This needs to be handled by the developer. Just a placeholder.
   }
 }
@@ -369,29 +566,29 @@ void HazardMgr::handleMailMissionParams(string str)
 //------------------------------------------------------------
 // Procedure: buildReport()
 
-bool HazardMgr::buildReport()
-{
-  m_msgs << "Config Requested:"                                  << endl;
-  m_msgs << "    swath_width_desired: " << m_swath_width_desired << endl;
-  m_msgs << "             pd_desired: " << m_pd_desired          << endl;
-  m_msgs << "   config requests sent: " << m_sensor_config_reqs  << endl;
-  m_msgs << "                  acked: " << m_sensor_config_acks  << endl;
-  m_msgs << "------------------------ "                          << endl;
-  m_msgs << "Config Result:"                                     << endl;
-  m_msgs << "       config confirmed: " << boolToString(m_sensor_config_set) << endl;
-  m_msgs << "    swath_width_granted: " << m_swath_width_granted << endl;
-  m_msgs << "             pd_granted: " << m_pd_granted          << endl << endl;
-  m_msgs << "--------------------------------------------" << endl << endl;
-
-  m_msgs << "               sensor requests: " << m_sensor_report_reqs << endl;
-  m_msgs << "             detection reports: " << m_detection_reports  << endl << endl;
-
-  m_msgs << "   Hazardset Reports Requested: " << m_summary_reports << endl;
-  m_msgs << "      Hazardset Reports Posted: " << m_summary_reports << endl;
-  m_msgs << "                   Report Name: " << m_report_name << endl;
-
-  return(true);
-}
+//bool HazardMgr::buildReport()
+//{
+//  m_msgs << "Config Requested:"                                  << endl;
+//  m_msgs << "    swath_width_desired: " << m_swath_width_desired << endl;
+//  m_msgs << "             pd_desired: " << m_pd_desired          << endl;
+//  m_msgs << "   config requests sent: " << m_sensor_config_reqs  << endl;
+//  m_msgs << "                  acked: " << m_sensor_config_acks  << endl;
+//  m_msgs << "------------------------ "                          << endl;
+//  m_msgs << "Config Result:"                                     << endl;
+//  m_msgs << "       config confirmed: " << boolToString(m_sensor_config_set) << endl;
+//  m_msgs << "    swath_width_granted: " << m_swath_width_granted << endl;
+//  m_msgs << "             pd_granted: " << m_pd_granted          << endl << endl;
+//  m_msgs << "--------------------------------------------" << endl << endl;
+//
+//  m_msgs << "               sensor requests: " << m_sensor_report_reqs << endl;
+//  m_msgs << "             detection reports: " << m_detection_reports  << endl << endl;
+//
+//  m_msgs << "   Hazardset Reports Requested: " << m_summary_reports << endl;
+//  m_msgs << "      Hazardset Reports Posted: " << m_summary_reports << endl;
+//  m_msgs << "                   Report Name: " << m_report_name << endl;
+//
+//  return(true);
+//}
 
 
 
