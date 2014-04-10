@@ -33,7 +33,7 @@ using namespace std;
 //---------------------------------------------------------
 // Constructor
 
-HazardMgr::HazardMgr() : m_repeats(0), m_max_time(0.0), m_options_set(false), m_hazard_reports(0), m_deploy_time(0), m_deployed(false), m_traverse_time(0), m_search_time(0), m_total_time(0), m_report_count(0)
+HazardMgr::HazardMgr() : m_repeats(0), m_max_time(9999.0), m_options_set(false), m_hazard_reports(0), m_deploy_time(0), m_deployed(false), m_traverse_time(0), m_search_time(0), m_total_time(0), m_report_count(0), m_pen_false_alarm(0), m_pen_missed_hazard(0), m_vote_multiplier(1), m_many_hazard_mode(false), m_many_hazard_count(0), m_many_hazard_reset_time(true)
 {
   // Config variables
   m_swath_width_desired = 25;
@@ -103,13 +103,13 @@ bool HazardMgr::OnNewMail(MOOSMSG_LIST &NewMail)
         m_deployed = true;
         m_deploy_time = MOOSTime();
         m_rep_time = MOOSTime();
+        m_options_set = true; // <----------------------------- put below?
       }
     }
 
     else if(key == "UHZ_MISSION_PARAMS") {
       if (!m_options_set) {
         handleMailMissionParams(sval);
-        m_options_set = true;
       }
     }
 
@@ -214,11 +214,25 @@ bool HazardMgr::handleMailHazardReport(string str) {
   string haztype = new_hazard.getType();
   if (m_classifications.find(atoi(hazlabel.c_str())) == m_classifications.end()) {
     m_classifications[atoi(hazlabel.c_str())] = make_pair(0,0);
+    if (m_many_hazard_mode) {
+      if (haztype == "hazard") {
+        m_classifications[atoi(hazlabel.c_str())].first++;
+      } else {
+        m_classifications[atoi(hazlabel.c_str())].second++;
+      }
+    }
   }
-  if (haztype == "hazard") {
-    m_classifications[atoi(hazlabel.c_str())].first++;
+  if (m_many_hazard_mode) {
+    if (haztype == "benign") {
+        m_classifications[atoi(hazlabel.c_str())].first--;
+        m_classifications[atoi(hazlabel.c_str())].second++;
+    }
   } else {
-    m_classifications[atoi(hazlabel.c_str())].second++;
+    if (haztype == "hazard") {
+      m_classifications[atoi(hazlabel.c_str())].first++;
+    } else {
+      m_classifications[atoi(hazlabel.c_str())].second++;
+    }
   }
 
   if(std::find(m_updates.begin(), m_updates.end(), atoi(hazlabel.c_str())) != m_updates.end()) {
@@ -259,6 +273,20 @@ bool HazardMgr::Iterate()
   if (m_deployed) {
     m_total_time = MOOSTime() - m_deploy_time;
     m_search_time = MOOSTime() - m_rep_time;
+    if (m_many_hazard_reset_time) {
+      m_many_hazard_start_time = MOOSTime();
+      m_many_hazard_reset_time = false;
+      if (m_many_hazard_count >= 10) {
+        m_many_hazard_mode = true;
+        cout << "SWITCHING ON MANY HAZARD MODE!!!" << endl;
+      } else {
+        m_many_hazard_mode = false;
+        cout << "SWITCHING OFF MANY HAZARD MODE..." << endl;
+      }
+      m_many_hazard_count = 0;
+    } else if ((MOOSTime() - m_many_hazard_start_time) >= 200) {
+      m_many_hazard_reset_time = true;
+    }
   }
 
   if (m_max_time-m_total_time < 100) {
@@ -441,6 +469,7 @@ bool HazardMgr::handleMailSensorConfigAck(string str)
 bool HazardMgr::handleMailDetectionReport(string str)
 {
   m_detection_reports++;
+  m_many_hazard_count++;
 
   XYHazard new_hazard = string2Hazard(str);
   new_hazard.setType("hazard");
@@ -467,6 +496,21 @@ bool HazardMgr::handleMailDetectionReport(string str)
   string req = "vname=" + m_host_community + ",label=" + hazlabel;
 
   Notify("UHZ_CLASSIFY_REQUEST", req);
+
+  if (m_many_hazard_mode) {
+    /******************************************************************************/
+    if (m_classifications.find(atoi(hazlabel.c_str())) == m_classifications.end()) {
+      m_classifications[atoi(hazlabel.c_str())] = make_pair(0,0);
+    }
+    m_classifications[atoi(hazlabel.c_str())].first++;
+
+    if(std::find(m_updates.begin(), m_updates.end(), atoi(hazlabel.c_str())) != m_updates.end()) {
+        return(true);
+    } else {
+        m_updates.push_back(atoi(hazlabel.c_str()));
+    }
+    /******************************************************************************/
+  }
 
   return(true);
 }
@@ -499,7 +543,7 @@ void HazardMgr::handleMailReportRequest()
       votes_against = m_class_iter->second.second;
     }
 
-    if (votes_for >= votes_against) {
+    if (votes_for >= m_vote_multiplier*votes_against) {
       XYHazard new_hazard = string2Hazard("label="+label.str()+",type=hazard");
       string hazlabel = new_hazard.getLabel();
       int ix = m_voted_hazard_set.findHazard(hazlabel);
@@ -557,7 +601,31 @@ void HazardMgr::handleMailMissionParams(string str)
     string value = svector[i];
     if (param=="max_time") {
       m_max_time = atof(value.c_str());
+    } else if (param=="penalty_false_alarm") {
+      m_pen_false_alarm = atof(value.c_str());
+    } else if (param=="penalty_missed_hazard") {
+      m_pen_missed_hazard = atof(value.c_str());
     }
+    if (m_max_time <= 6000) {
+      if (m_host_community == "jake") {
+        Notify("SURVEY1_UPDATES", "points = format=lawnmower,label=kaspersearch,x=125,y=-252.5,height=255,width=550,lane_width=70,rows=ew,degs=0");
+        Notify("SURVEY2_UPDATES", "points = format=lawnmower,label=kaspersearch,x=125,y=-217.5,height=255,width=550,lane_width=70,rows=ew,degs=0");
+      } else {
+        m_swath_width_desired = 25;
+        //m_pd_desired = 0.525;
+        //m_pd_desired = 0.56;
+        m_pd_desired = 0.59;
+        postSensorConfigRequest();
+        Notify("SURVEY1_UPDATES", "points = format=lawnmower,label=kaspersearch,x=125,y=-217.5,height=255,width=550,lane_width=70,rows=ew,degs=0");
+        Notify("SURVEY2_UPDATES", "points = format=lawnmower,label=kaspersearch,x=125,y=-252.5,height=255,width=550,lane_width=70,rows=ew,degs=0");
+      }
+    }
+//    if (m_pen_false_alarm < m_pen_missed_hazard) {
+//      m_vote_multiplier = 0.5;
+//    } else {
+//      m_vote_multiplier = 1.0;
+//    }
+    cout << "VOTE MULTIPLIER: " << m_vote_multiplier << endl;
     // This needs to be handled by the developer. Just a placeholder.
   }
 }

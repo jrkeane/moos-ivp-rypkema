@@ -101,6 +101,13 @@ class HazardMgr : public AppCastingMOOSApp
    double m_total_time;
    double m_addit_ratio;
    int m_report_count;
+   double m_pen_false_alarm;
+   double m_pen_missed_hazard;
+   double m_vote_multiplier;
+   bool m_many_hazard_mode;
+   int m_many_hazard_count;
+   double m_many_hazard_start_time;
+   bool m_many_hazard_reset_time;
    int test;
 };
 
