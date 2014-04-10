@@ -33,7 +33,7 @@ using namespace std;
 //---------------------------------------------------------
 // Constructor
 
-HazardMgr::HazardMgr() : m_repeats(0), m_max_time(9999.0), m_options_set(false), m_hazard_reports(0), m_deploy_time(0), m_deployed(false), m_traverse_time(0), m_search_time(0), m_total_time(0), m_report_count(0), m_pen_false_alarm(0), m_pen_missed_hazard(0), m_vote_multiplier(1), m_many_hazard_mode(false), m_many_hazard_count(0), m_many_hazard_reset_time(true)
+HazardMgr::HazardMgr() : m_repeats(0), m_max_time(99999.0), m_options_set(false), m_hazard_reports(0), m_deploy_time(0), m_deployed(false), m_traverse_time(0), m_search_time(0), m_total_time(0), m_report_count(0), m_pen_false_alarm(0), m_pen_missed_hazard(0), m_vote_multiplier(1), m_many_hazard_mode(false), m_many_hazard_count(0), m_many_hazard_reset_time(true)
 {
   // Config variables
   m_swath_width_desired = 25;
@@ -169,10 +169,10 @@ void HazardMgr::handleReceiveHazardReport(string str) {
       }
   }
 
-  for (m_class_iter = m_classifications.begin(); m_class_iter != m_classifications.end(); ++m_class_iter) {
-    cout << "COMBINED KEY: " << m_class_iter->first << " VOTES: for=" << m_class_iter->second.first << " against=" << m_class_iter->second.second << endl;
-  }
-  cout << endl;
+//  for (m_class_iter = m_classifications.begin(); m_class_iter != m_classifications.end(); ++m_class_iter) {
+//    cout << "COMBINED KEY: " << m_class_iter->first << " VOTES: for=" << m_class_iter->second.first << " against=" << m_class_iter->second.second << endl;
+//  }
+//  cout << endl;
 }
 
 void HazardMgr::handleSendHazardReport() {
@@ -276,7 +276,7 @@ bool HazardMgr::Iterate()
     if (m_many_hazard_reset_time) {
       m_many_hazard_start_time = MOOSTime();
       m_many_hazard_reset_time = false;
-      if (m_many_hazard_count >= 10) {
+      if (m_many_hazard_count >= 15) {
         m_many_hazard_mode = true;
         cout << "SWITCHING ON MANY HAZARD MODE!!!" << endl;
       } else {
@@ -499,6 +499,13 @@ bool HazardMgr::handleMailDetectionReport(string str)
 
   if (m_many_hazard_mode) {
     /******************************************************************************/
+    if (m_host_community == "jake") {
+      cout << "CHANGE PD" << endl;
+      Notify("UHZ_CONFIG_REQUEST", "vname=jake, pd=0.8");
+    } else {
+      cout << "CHANGE PD" << endl;
+      Notify("UHZ_CONFIG_REQUEST", "vname=kasper, pd=0.7");
+    }
     if (m_classifications.find(atoi(hazlabel.c_str())) == m_classifications.end()) {
       m_classifications[atoi(hazlabel.c_str())] = make_pair(0,0);
     }
@@ -510,6 +517,16 @@ bool HazardMgr::handleMailDetectionReport(string str)
         m_updates.push_back(atoi(hazlabel.c_str()));
     }
     /******************************************************************************/
+  } else {
+    if (m_host_community == "jake") {
+      Notify("UHZ_CONFIG_REQUEST", "vname=jake, pd=0.7");
+    } else {
+      if (m_swath_width_desired==25) {
+        Notify("UHZ_CONFIG_REQUEST", "vname=kasper, pd=0.59");
+      } else {
+        Notify("UHZ_CONFIG_REQUEST", "vname=kasper, pd=0.7");
+      }
+    }
   }
 
   return(true);
@@ -620,11 +637,11 @@ void HazardMgr::handleMailMissionParams(string str)
         Notify("SURVEY2_UPDATES", "points = format=lawnmower,label=kaspersearch,x=125,y=-252.5,height=255,width=550,lane_width=70,rows=ew,degs=0");
       }
     }
-//    if (m_pen_false_alarm < m_pen_missed_hazard) {
-//      m_vote_multiplier = 0.5;
-//    } else {
-//      m_vote_multiplier = 1.0;
-//    }
+    if (m_pen_false_alarm >= 0.5*m_pen_missed_hazard) {
+      m_vote_multiplier = 1.4;
+    } else {
+      m_vote_multiplier = 1.0;
+    }
     cout << "VOTE MULTIPLIER: " << m_vote_multiplier << endl;
     // This needs to be handled by the developer. Just a placeholder.
   }
