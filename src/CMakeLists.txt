@@ -25,7 +25,6 @@ ADD_SUBDIRECTORY(pCommunicationAngle)
 ADD_SUBDIRECTORY(pPointAssign)
 ADD_SUBDIRECTORY(pGenPath)
 ADD_SUBDIRECTORY(uFldHazardMgrX)
-ADD_SUBDIRECTORY(uFldHazardMgrGamed)
 
 ##############################################################################
 #                           END of CMakeLists.txt
