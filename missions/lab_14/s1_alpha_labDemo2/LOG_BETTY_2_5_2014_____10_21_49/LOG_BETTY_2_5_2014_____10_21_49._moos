@@ -1,0 +1,330 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% LOG FILE:       ./LOG_BETTY_2_5_2014_____10_21_49/LOG_BETTY_2_5_2014_____10_21_49._moos
+%% FILE OPENED ON  Fri May  2 10:21:49 2014
+%% LOGSTART               1399040509.22
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Lab7
+
+ServerHost = localhost
+ServerPort = 9200
+
+// Community name IS the vehicle name
+Community  = betty
+
+MOOSTimeWarp = 1
+
+// MIT Sailing Pavilion
+LatOrigin  =  42.358456		
+LongOrigin = -71.087589	
+
+
+
+  
+//------------------------------------------------------------
+Processconfig = ANTLER
+{
+  MSBetweenLaunches = 100
+   
+  Run = MOOSDB             @ NewConsole = false
+  Run = pShare             @ NewConsole = false
+  Run = pLogger            @ NewConsole = false
+  Run = pNodeReporter      @ NewConsole = false
+  Run = pMarinePID         @ NewConsole = false
+  Run = pHelmIvP           @ NewConsole = false
+  Run = pEchoVar           @ NewConsole = false
+  Run = pBasicContactMgr   @ NewConsole = false
+  Run = pHostInfo          @ NewConsole = false
+  Run = uFldNodeBroker     @ NewConsole = false
+  Run = uFldMessageHandler @ NewConsole = false
+  Run = iActuationKFAC     @ NewConsole = false
+  Run = iGPS_KF            @ NewConsole = false
+  Run = iOS5000AC          @ NewConsole = false
+  Run = uProcessWatch_fld  @ NewConsole = false
+}
+
+//---------------------------------------------------------
+// pShare Config Block  (Created from Plugin)
+
+ProcessConfig = pShare
+{
+  AppTick    = 2
+  CommsTick  = 2
+
+  input = route =  localhost:9201
+}
+
+
+//--------------------------------------------------
+// pLogger Configuration Block (Created from Plugin)
+
+ProcessConfig = pLogger
+{
+  AppTick 	= 10
+  CommsTick 	= 10
+  
+  File		= LOG_BETTY
+  PATH		= ./
+  //SyncLog 	= true @ 0.2
+  AsyncLog 	= true
+  FileTimeStamp = true
+
+  BridgeFrequency = 0
+
+  Log = IVPHELM_LIFE_EVENT @ 0 nosync
+
+  // Log it all!!!!!
+  LogAuxSrc = true
+  WildCardLogging = true 
+  LoggingDirectorySummaryFile = ~/.pLogger_BETTY
+
+
+}
+
+//--------------------------------------------------------
+// pNodeReporter Configuration Block (Created from Plugin)
+
+ProcessConfig = pNodeReporter
+{
+  AppTick     = 2
+  CommsTick   = 2
+  
+  VESSEL_TYPE = KAYAK
+}
+
+//-----------------------------------------------------
+// pMarinePID Configuration Block (created from plugin)
+
+ProcessConfig = pMarinePID
+{
+  AppTick    = 10
+  CommsTick  = 10
+  
+  VERBOSE       = true
+  DEPTH_CONTROL = false
+  ACTIVE_START  = true
+  
+  // Yaw PID controller
+  YAW_PID_KP             = 0.35
+  YAW_PID_KD             = 0.0
+  YAW_PID_KI             = 0.0
+  YAW_PID_INTEGRAL_LIMIT = 0.07
+  
+  // Speed PID controller
+  SPEED_PID_KP           = 1.0
+  SPEED_PID_KD           = 0.0
+  SPEED_PID_KI           = 0.0
+  SPEED_PID_INTEGRAL_LIMIT = 0.07
+  
+  // Maximums
+  MAXRUDDER  = 100
+  MAXTHRUST  = 100
+  
+  // A non-zero SPEED_FACTOR overrides use of SPEED_PID
+  // Will set DESIRED_THRUST = DESIRED_SPEED * SPEED_FACTOR
+  SPEED_FACTOR = 40
+}
+
+//----------------------------------------------------
+// pHelmIvP Configuration Block  (Created from Plugin)
+
+ProcessConfig = pHelmIvP
+{
+  AppTick    = 4
+  CommsTick  = 4
+  ok_skew      = any
+
+  Behaviors    = alpha.bhv  
+  Verbose      = false
+  Domain       = course:0:359:360
+  Domain       = speed:0:5:26
+}
+
+//------------------------------------------
+// pEchoVar configuration block
+
+ProcessConfig = pEchoVar
+{
+  AppTick   = 5
+  CommsTick = 5
+
+  Echo  = GPS_LATITUDE    ->  NAV_LAT
+  Echo  = GPS_LONGITUDE   ->  NAV_LONG
+  Echo  = GPS_X           ->  NAV_X
+  Echo  = GPS_Y           ->  NAV_Y
+  Echo  = GPS_SPEED       ->  NAV_SPEED
+  Echo  = COMPASS_HEADING ->  NAV_HEADING
+
+  FLIP:1  = source_variable = MVIEWER_LCLICK
+  FLIP:1  = dest_variable   = RETURN_UPDATES
+  FLIP:1  = dest_separator  = #
+  FLIP:1  = y -> ycenter_assign
+  FLIP:1  = x -> xcenter_assign
+}
+
+
+//--------------------------------------------------------
+// pBasicContactMgr Configuration Block (Created from Plugin)
+
+ProcessConfig = pBasicContactMgr
+{
+  AppTick   = 2
+  CommsTick = 2
+
+  decay = 30,60
+
+  alert_verbose = true
+
+  contact_max_age = 3600
+  display_radii   = true
+
+  default_alert_range = 20
+  default_cpa_range   = 28
+  default_alert_range_color = gray70
+  default_cpa_range_color   = gray30
+
+  alert = id=avd, var=CONTACT_INFO, val="name=$[VNAME] # contact=$[VNAME]"
+  alert = id=avd, alert_range=40, cpa_range=45, alert_range_color=green
+  alert = id=avd, cpa_range_color=invisible
+}
+
+//--------------------------------------------------
+// pHostInfo configuration block from plugin
+
+ProcessConfig = pHostInfo
+{
+  AppTick 	= 1
+  CommsTick 	= 1
+
+  DEFAULT_HOSTIP = localhost
+}
+
+
+//--------------------------------------------------
+// uFldNodeBroker configuration block from plugin
+
+ProcessConfig = uFldNodeBroker
+{
+  AppTick   = 1
+  CommsTick = 1
+
+  //TRY_SHORE_HOST = pshare_route=$(SHORE_IP):$(SHORE_LISTEN)
+  TRY_SHORE_HOST = pshare_route=multicast_13
+
+  BRIDGE = src=VIEW_POLYGON
+  BRIDGE = src=VIEW_POINT
+  BRIDGE = src=VIEW_SEGLIST
+  BRIDGE = src=APPCAST
+  BRIDGE = src=NODE_REPORT_LOCAL,  alias=NODE_REPORT
+  BRIDGE = src=NODE_MESSAGE_LOCAL, alias=NODE_MESSAGE
+}
+
+//--------------------------------------------------
+// uFldMessageHandler configuration block from plugin
+
+ProcessConfig = uFldMessageHandler
+{
+  AppTick   = 3
+  CommsTick = 3
+
+  STRICT_ADDRESSING = true
+}
+
+
+ProcessConfig = iGPS_KF
+{
+        AppTick = 10
+        CommsTick = 10
+        Prefix = GPS
+        Port = /dev/GPSUBLOX
+        Streaming = true
+        Verbose = false
+        BaudRate = 115200
+        Type = UBLOX
+        SHOW_CEP = false
+        RAW_GPS = true
+}
+
+ProcessConfig = iOS5000AC
+{
+  AppTick                       = 5
+  CommsTick                     = 5
+  Prefix = COMPASS
+  Port                          = /dev/OS5000           // tty port for communicating with the dig compass
+  Speed                         = 19200                 // Always set to 19200 (OS5000 baud rate)
+  PreRotation                   = -15                   // Adjust by -15 for magnetic variation in Boston
+}
+
+//--------------------------------------------------------
+// uProcessWatch Configuration Block (Created from Plugin)
+
+ProcessConfig = uProcessWatch
+{
+  AppTick   = 2
+  CommsTick = 2
+
+  ALLOW_RETRACTIONS = true
+
+  WATCH_ALL = true // default is true
+
+  NOWATCH = uMAC*  
+  NOWATCH = uXMS*
+  NOWATCH = uPokeDB*
+  
+  //WATCH  = uSimMarine
+  WATCH  = pMOOSBridge*
+  //WATCH  = pLogger
+  WATCH  = pNodeReporter
+  WATCH  = pMarinePID
+  WATCH  = pHelmIvP
+  WATCH  = iOS5000AC
+  WATCH  = iHealth_KF100
+  WATCH  = iGPS_KF
+  WATCH  = iActuationKFAC*
+  
+  SUMMARY_WAIT = 12
+}
+
+
+
+
+//------------------------------------------------------
+// iActuationKF configuration block from plugin (BETTY)
+
+ProcessConfig = iActuationKFAC
+{
+  AppTick     = 10
+  CommsTick   = 10
+
+  // tty port for communicating with the vehicle controller
+  Port                          = /dev/KINGFISHER       
+
+  // No helm command in Timeout seconds = ALL STOPPED
+  Timeout                       = 6                     
+
+  ComputeHeading                = 0         // 0 = NO, 1 = YES
+  m_verbose                     = 1
+  MAX_THRUST_VALUE              = 84
+  CRITICAL_VOLTAGE = 11.0
+  CRITICAL_CURRENT = 5.0
+  CRITICAL_CURRENT_TIMEOUT = 10
+//  MAX_THRUST_VALUE = 1000
+  // MagOffsetX                 = 0.0
+  // MagOffsetY                 = 0.0
+  // ProcessOrientationData     = true
+  // ProcessMagnetometerData    = true
+
+  OFFSET_LT10        =  8.5
+  OFFSET_GTE10_LT20  =  8.5
+  OFFSET_GTE20_LT30  =  8.5
+  OFFSET_GTE30_LT40  =  8.0
+  OFFSET_GTE40_LT50  =  7.5
+  OFFSET_GTE50_LT60  =  7.0
+  OFFSET_GTE60_LT70  =  7.0
+  OFFSET_GTE70_LT80  =  7.0
+  OFFSET_GTE80_LT90  =  7.5
+  OFFSET_GTE90       =  8.5
+}
+
+
+
+
