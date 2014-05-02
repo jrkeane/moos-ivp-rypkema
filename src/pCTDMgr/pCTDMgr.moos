@@ -1,0 +1,9 @@
+//------------------------------------------------
+// pCTDMgr config block
+
+ProcessConfig = pCTDMgr
+{
+   AppTick   = 4
+   CommsTick = 4
+}
+
