@@ -1,0 +1,29 @@
+ProcessConfig = pFrontEstimate
+{
+  AppTick    = 4
+  CommsTick  = 4
+
+  vname = $(VNAME)
+  temperature_factor = $(COOL_FAC)
+  cooling_steps = $(COOL_STEPS)
+  min_offset = -90
+  max_offset = -90
+  min_angle = 5
+  max_angle = 5
+  min_amplitude = 20
+  max_amplitude = 20
+  min_period = -300
+  max_period = -100
+  min_wavelength = 100
+  max_wavelength = 500
+  min_alpha = 500
+  max_alpha = 500
+  min_beta = 20
+  max_beta = 20
+  min_T_N = 20
+  max_T_N = 20 
+  min_T_S = 25
+  max_T_S = 25 
+  concurrent = $(CONCURRENT)
+  adaptive=$(ADAPTIVE)
+}
