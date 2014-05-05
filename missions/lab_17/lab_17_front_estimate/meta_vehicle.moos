@@ -41,6 +41,12 @@ ProcessConfig = pCTDMgr
   desired_value = 22.5
   num_pts_to_average = 8
   op_region = pts={-50,30 : 100,30 : 230,30 : 230,-200 : -100,-200 : -100,30}
+
+  #ifdef VNAME nick
+    reverse = false
+  #elseifdef VNAME rypkema
+    reverse = true
+  #endif
 }
 
 #include plug_pFrontEstimate.moos

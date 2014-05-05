@@ -1,0 +1,204 @@
+//--------    FILE: $(VNAME).bhv   -------------
+
+initialize   DEPLOY  = false
+initialize   RETURN  = false
+initialize   STATION_KEEP = false
+initialize   SURVEY  = true
+initialize   AVOID   = true
+initialize   SURVEY_UNDERWAY = false
+initialize   SPIRALCW = false
+initialize   SPIRALCCW = false
+initialize   SEARCH_FIRST = true
+initialize   SEARCH_SECOND = false
+initialize   BEST_FIT = false
+
+//----------------------------------------------
+// Arc Search East  ----------------------------
+Behavior = BHV_ArcSearch
+{
+  name       = arcsearch_first
+  pwt        = 100
+  condition  = SEARCH_FIRST = true
+  perpetual  = true
+  endflag    = SEARCH_FIRST = false
+  endflag    = SEARCH_SECOND = true
+
+  #ifdef VNAME nick
+    speed = 4
+    center_x = 110
+    center_y = -90
+    radius = 80
+    angle = 0
+    arrival_radius = 5
+    swath = -160
+    num_points = 10
+#elseifdef VNAME rypkema
+    speed = 4
+    center_x = 10
+    center_y = -120
+    radius = 80
+    angle = 180
+    arrival_radius = 5
+    swath = 110
+    num_points = 6
+  #endif
+}
+
+//----------------------------------------------
+// Arc Search West  ----------------------------
+Behavior = BHV_ArcSearch
+{
+  name       = arcsearch_second
+  pwt        = 100
+  condition  = SEARCH_SECOND = true
+  perpetual  = true
+  endflag    = SEARCH_SECOND = false
+  endflag    = RETURN = true
+  updates    = ARCSEARCH_UPDATES
+
+  #ifdef VNAME nick
+    speed = 4
+    center_x = 10
+    center_y = -120
+    radius = 80
+    angle = 180
+    arrival_radius = 5
+    swath = 110
+    num_points = 6
+#elseifdef VNAME rypkema
+    speed = 4
+    center_x = 110
+    center_y = -90
+    radius = 80
+    angle = 0
+    arrival_radius = 5
+    swath = -160
+    num_points = 10
+  #endif
+}
+
+//----------------------------------------------
+// Clockwise Spiral ----------------------------
+Behavior = BHV_MySpiral
+{
+  name       = spiral_normal
+  pwt        = 200
+  condition  = SPIRALCW = true
+  perpetual  = true
+  endflag    = SPIRALCW = false
+  activeflag = SURVEY_UNDERWAY = true
+
+  speed = 3
+  rudder_start = 100
+  rudder_increment = 0.5
+  rudder_increment_factor = 1.26
+  spiral_time_length = 250
+  rudder_min = 15
+  points_distance = 10
+  ccw = 0
+}
+
+//----------------------------------------------
+// Counterclockwise Spiral ---------------------
+Behavior = BHV_MySpiral
+{
+  name       = spiral_counter
+  pwt        = 200
+  condition  = SPIRALCCW = true
+  perpetual  = true
+  endflag    = SPIRALCCW = false
+  activeflag = SURVEY_UNDERWAY = true
+
+  speed = 3
+  rudder_start = 100
+  rudder_increment = 0.5
+  rudder_increment_factor = 1.26
+  spiral_time_length = 250
+  rudder_min = 15
+  points_distance = 10
+  ccw = 1
+}
+
+//----------------------------------------------
+// Return Waypoint -----------------------------
+Behavior = BHV_Waypoint
+{
+  name       = waypt_return
+  pwt        = 100
+  condition  = RETURN = true
+  condition  = DEPLOY = true
+  perpetual  = true
+  endflag    = RETURN = false
+  endflag    = DEPLOY = false
+
+         speed = 5.0
+        radius = 2.0
+     nm_radius = 8.0
+        points = $(START_POS)
+	//repeat=10
+	//lead=8
+}
+
+//----------------------------------------------
+// Best Fit Line -------------------------------
+Behavior = BHV_Waypoint
+{
+  name       = best_fit
+  pwt        = 100
+  condition  = BEST_FIT = true
+  condition  = DEPLOY = true
+  perpetual  = true
+  endflag    = BEST_FIT = false
+  endflag    = RETURN = true
+  endflag    = SURVEY_UNDERWAY = false
+  updates    = BEST_FIT_UPDATES
+
+        radius = 5.0
+   slip_radius = 15.0
+          lead = 8
+   lead_damper = 1
+         speed = 5
+        radius = 2.0
+     nm_radius = 8.0
+        points = $(START_POS)
+}
+
+//----------------------------------------------
+// AUV Constant Depth --------------------------
+Behavior = BHV_ConstantDepth
+{
+  name      = bhv_const_depth_b
+  pwt       = 60
+  duration  = no-time-limit
+  condition = DEPLOY = true
+
+        depth = 5
+    peakwidth = 3
+    basewidth = 2
+  summitdelta = 20
+}
+
+//----------------------------------------------
+// Collision Avoidance -------------------------
+Behavior = BHV_AvoidCollision
+{
+  name       = avdcollision_
+  pwt        = 200
+  condition  = AVOID=true
+  updates    = CONTACT_INFO
+  endflag    = CONTACT_RESOLVED = $[CONTACT]
+  templating = spawn
+
+             contact = to-be-set
+    on_no_contact_ok = true
+         extrapolate = true
+               decay = 30,60
+
+        pwt_outer_dist = 50
+        pwt_inner_dist = 20
+        completed_dist = 75
+     min_util_cpa_dist = 8
+     max_util_cpa_dist = 25
+             pwt_grade = linear
+   bearing_line_config = white:0, green:0.65, yellow:0.8, red:1.0
+}
