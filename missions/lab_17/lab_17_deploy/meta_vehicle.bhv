@@ -14,6 +14,21 @@ initialize   BEST_FIT = false
 initialize   SAFETY = true
 
 //----------------------------------------------
+Behavior = BHV_StationKeep
+{
+  name      = station_keep
+  pwt       = 1000
+  condition = STATION = true
+  condition = DEPLOY = true
+
+  center_activate = true
+     inner_radius = 10
+     outer_radius = 20
+      outer_speed = 1.0
+       swing_time = 10
+}
+
+//----------------------------------------------
 // Arc Search East  ----------------------------
 Behavior = BHV_ArcSearch
 {
@@ -24,7 +39,7 @@ Behavior = BHV_ArcSearch
   endflag    = SEARCH_FIRST = false
   endflag    = SEARCH_SECOND = true
 
-  #ifdef VNAME nick
+  #ifdef VNAME archie
     speed = 1.4
     center_x = 70
     center_y = -90
@@ -33,7 +48,7 @@ Behavior = BHV_ArcSearch
     arrival_radius = 5
     swath = -160
     num_points = 10
-#elseifdef VNAME rypkema
+#elseifdef VNAME betty
     speed = 1.4
     center_x = 30
     center_y = -120
@@ -57,16 +72,16 @@ Behavior = BHV_ArcSearch
   endflag    = RETURN = true
   updates    = ARCSEARCH_UPDATES
 
-  #ifdef VNAME nick
+  #ifdef VNAME archie
     speed = 1.4
-    center_x = 10
+    center_x = 30
     center_y = -120
     radius = 80
     angle = 180
     arrival_radius = 5
     swath = 110
     num_points = 6
-#elseifdef VNAME rypkema
+#elseifdef VNAME betty
     speed = 1.4
     center_x = 70
     center_y = -90
@@ -91,8 +106,8 @@ Behavior = BHV_MySpiral
 
   speed = 1.4
   rudder_start = 100
-  rudder_increment = 0.15
-  rudder_increment_factor = 1.16
+  rudder_increment = 0.25
+  rudder_increment_factor = 1.26
   spiral_time_length = 200
   rudder_min = 20
   points_distance = 10
@@ -112,8 +127,8 @@ Behavior = BHV_MySpiral
 
   speed = 1.4
   rudder_start = 100
-  rudder_increment = 0.15
-  rudder_increment_factor = 1.16
+  rudder_increment = 0.25
+  rudder_increment_factor = 1.26
   spiral_time_length = 200
   rudder_min = 20
   points_distance = 10
@@ -125,12 +140,13 @@ Behavior = BHV_MySpiral
 Behavior = BHV_Waypoint
 {
   name       = waypt_return
-  pwt        = 100
+  pwt        = 1000
   condition  = RETURN = true
   condition  = DEPLOY = true
   perpetual  = true
   endflag    = RETURN = false
   endflag    = DEPLOY = false
+  activeflag = SURVEY_UNDERWAY = false
 
          speed = 1.4
         radius = 2.0
@@ -165,40 +181,29 @@ Behavior = BHV_Waypoint
 }
 
 //----------------------------------------------
-// AUV Constant Depth --------------------------
-Behavior = BHV_ConstantDepth
-{
-  name      = bhv_const_depth_b
-  pwt       = 60
-  duration  = no-time-limit
-  condition = DEPLOY = true
-
-        depth = 5
-    peakwidth = 3
-    basewidth = 2
-  summitdelta = 20
-}
-
-//----------------------------------------------
 // Collision Avoidance -------------------------
 Behavior = BHV_AvoidCollision
 {
-  name       = avdcollision_
-  pwt        = 200
-  condition  = AVOID=true
+  name       = avd_
+  pwt        = 100
+  condition  = COLL_AVD = true
+  condition  = MODE==ACTIVE
   updates    = CONTACT_INFO
   endflag    = CONTACT_RESOLVED = $[CONTACT]
   templating = spawn
 
-             contact = to-be-set
-    on_no_contact_ok = true
-         extrapolate = true
-               decay = 30,60
+               contact = to-be-set
+      on_no_contact_ok = true
+           extrapolate = true
+                 decay = 30,60
 
+//---------------------------------NEW
         pwt_outer_dist = 30
-        pwt_inner_dist = 10
-        completed_dist = 75
+        pwt_inner_dist = 15
+        completed_dist = 35
      min_util_cpa_dist = 8
+//---------------------------------
+
      max_util_cpa_dist = 25
              pwt_grade = linear
    bearing_line_config = white:0, green:0.65, yellow:0.8, red:1.0

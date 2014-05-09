@@ -42,9 +42,9 @@ ProcessConfig = pCTDMgr
   num_pts_to_average = 20
   op_region = pts={-85,-80 : -40,-50 : 100,5 : 165,5 : 165,-190 : -40,-190}
 
-  #ifdef VNAME nick
+  #ifdef VNAME archie
     reverse = false
-  #elseifdef VNAME rypkema
+  #elseifdef VNAME betty
     reverse = true
   #endif
 }
