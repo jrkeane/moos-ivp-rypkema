@@ -28,8 +28,29 @@ Processconfig = ANTLER
   Run = iGPS_KF            @ NewConsole = false
   Run = iOS5000AC          @ NewConsole = false
   Run = uProcessWatch_fld  @ NewConsole = false
+  Run = pFrontEstimate     @ NewConsole = false
+  Run = pCTDMgr            @ NewConsole = false
 }
 
+//--------------------------------------------------------------
+// pCTDMgr configuration block
+ProcessConfig = pCTDMgr
+{
+  AppTick   = 10
+  CommsTick = 10
+
+  desired_value = 22.5
+  num_pts_to_average = 20
+  op_region = pts={-85,-80 : -40,-50 : 100,5 : 165,5 : 165,-190 : -40,-190}
+
+  #ifdef VNAME archie
+    reverse = false
+  #elseifdef VNAME betty
+    reverse = true
+  #endif
+}
+
+#include plug_pFrontEstimate.moos
 #include plug_pShare.moos
 #include plug_pLogger.moos
 #include plug_pNodeReporter.moos
