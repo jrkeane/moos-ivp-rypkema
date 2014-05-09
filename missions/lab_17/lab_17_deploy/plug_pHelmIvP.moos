@@ -13,6 +13,8 @@ ProcessConfig = pHelmIvP
 
   ok_skew      = any
 
+  ivp_behavior_dir = /home/student/moos-ivp-rypkema/lib
+
 #ifdef VTYPE UUV
   Domain       = depth:0:10:101
 #endif
