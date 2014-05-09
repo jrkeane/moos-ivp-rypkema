@@ -183,7 +183,7 @@ IvPFunction* BHV_ArcSearch::onRunState()
       m_x_points.push_back(x);
       m_y_points.push_back(y);
     }
-    viewseglist << "},label=arcsearch";
+    viewseglist << "},label=arcsearch,edge_size=4";
     postMessage("VIEW_SEGLIST", viewseglist.str());
     m_wpt_final_idx = m_num_points-1;
     m_wpt_idx = 0;

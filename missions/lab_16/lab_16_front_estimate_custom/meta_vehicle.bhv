@@ -23,11 +23,11 @@ Behavior = BHV_ArcSearch
   endflag    = SEARCH_FIRST = false
   endflag    = SEARCH_SECOND = true
 
-  speed = 4
+  speed = 1.4
   center_x = 110
   center_y = -90
   radius = 80
-  angle = 0
+  angle = 30
   arrival_radius = 5
   swath = -160
   num_points = 10
@@ -66,12 +66,12 @@ Behavior = BHV_MySpiral
   endflag    = SPIRALCW = false
   activeflag = SURVEY_UNDERWAY = true
 
-  speed = 3
+  speed = 1.4
   rudder_start = 100
-  rudder_increment = 0.5
-  rudder_increment_factor = 1.26
+  rudder_increment = 0.15
+  rudder_increment_factor = 1.06
   spiral_time_length = 250
-  rudder_min = 15
+  rudder_min = 30
   points_distance = 10
   ccw = 0
 }
@@ -87,12 +87,12 @@ Behavior = BHV_MySpiral
   endflag    = SPIRALCCW = false
   activeflag = SURVEY_UNDERWAY = true
 
-  speed = 3
+  speed = 1.4
   rudder_start = 100
-  rudder_increment = 0.5
-  rudder_increment_factor = 1.26
+  rudder_increment = 0.15
+  rudder_increment_factor = 1.06
   spiral_time_length = 250
-  rudder_min = 15
+  rudder_min = 30
   points_distance = 10
   ccw = 1
 }
