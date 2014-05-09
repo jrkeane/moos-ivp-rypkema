@@ -138,6 +138,10 @@ bool CTDMgr::Iterate()
     m_Comms.Notify("VIEW_POINT", viewpoint.str());
   }
 
+//  if (m_x_pos.size() > 2) {
+//    CalculateBestFitLine();
+//  }
+
   if(!m_polygon.contains(m_x, m_y) && (m_out_2_in)) {
     cout << "OUTSIDE OF OPERATING REGION" << endl;
     m_off = true;
@@ -148,11 +152,11 @@ bool CTDMgr::Iterate()
       m_Comms.Notify("SPIRALCW", "false");
       m_Comms.Notify("SEARCH_FIRST", "false");
       m_Comms.Notify("SEARCH_SECOND", "false");
-      //m_Comms.Notify("RETURN", "true");
-      //m_Comms.Notify("SURVEY_UNDERWAY", "false");
+      m_Comms.Notify("RETURN", "true");
+      m_Comms.Notify("SURVEY_UNDERWAY", "false");
       m_off = true;
       m_out_2_in = true;
-      CalculateBestFitLine();
+      //CalculateBestFitLine();
     } else {
       m_Comms.Notify("SPIRALCCW", "false");
       m_Comms.Notify("SPIRALCW", "false");
@@ -187,16 +191,13 @@ void CTDMgr::CalculateBestFitLine() {
   double _yint = _ymean - _slope*_xmean;
   double x1 = -85;
   double x2 = 170;
-  double y1 = _slope * x1 + _yint+10;
-  double y2 = _slope * x2 + _yint+10;
-  double x3 = -85;
-  double x4 = 170;
-  double y3 = _slope * x1 + _yint-10;
-  double y4 = _slope * x2 + _yint-10;
+  double y1 = _slope * x1 + _yint;
+  double y2 = _slope * x2 + _yint;
   stringstream bestfit;
-  bestfit << "points=" << x1 << "," << y1 << ":" << x2 << "," << y2 << ":" << x3 << "," << y3  << ":" << x4 << "," << y4;
-  m_Comms.Notify("BEST_FIT_UPDATES", bestfit.str());
-  m_Comms.Notify("BEST_FIT", "true");
+  bestfit << "pts={" << x1 << "," << y1 << ":" << x2 << "," << y2 << "},label=bestfit,edge_size=4";
+  //m_Comms.Notify("VIEW_SEGLIST", bestfit.str());
+  //m_Comms.Notify("BEST_FIT_UPDATES", bestfit.str());
+  //m_Comms.Notify("BEST_FIT", "true");
 }
 
 //---------------------------------------------------------
@@ -235,6 +236,11 @@ bool CTDMgr::OnStartUp()
 
   if (!m_MissionReader.GetValue("Community", m_host_community)) {
     cerr << "No community specified! Quitting!" << endl;
+    return(false);
+  }
+
+  if (!m_MissionReader.GetConfigurationParam("reverse", m_reverse)) {
+    cerr << "No reverse parameter specified! Quitting!" << endl;
     return(false);
   }
 
