@@ -220,6 +220,9 @@ bool CTDMgr::Iterate()
     double center_x, center_y;
     center_x = m_bnd_x_1 + (m_bnd_x_2-m_bnd_x_1)/2;
     center_y = m_bnd_y_1 + (m_bnd_y_2-m_bnd_y_1)/2;
+    if (m_reverse) {
+      center_y -= 2;
+    }
     double angle = radToHeading(atan2(m_bnd_y_1 - m_bnd_y_2, m_bnd_x_1 - m_bnd_x_2)+PI/2);
     double length = sqrt(pow(m_bnd_y_1 - m_bnd_y_2,2) + pow(m_bnd_x_1 - m_bnd_x_2,2))-60;
     update_str << "points=format=lawnmower,x=" << center_x << ",y=" << center_y << ",height=50,width=" << length << ",lane_width=35,rows=north-south,degs=" << angle;

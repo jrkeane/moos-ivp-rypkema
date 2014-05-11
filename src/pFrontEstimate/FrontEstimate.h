@@ -87,7 +87,7 @@ class CFrontEstimate : public AppCastingMOOSApp
   double max_T_S;
   double delta_t;
 
-  int num_param; 
+  int num_param;
   int cooling_steps;
   int num_meas;
   int anneal_step;
@@ -97,5 +97,5 @@ class CFrontEstimate : public AppCastingMOOSApp
   void postParameterReport();
 };
 
-#endif 
+#endif
 
