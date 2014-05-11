@@ -26,6 +26,7 @@ ADD_SUBDIRECTORY(pPointAssign)
 ADD_SUBDIRECTORY(pGenPath)
 ADD_SUBDIRECTORY(uFldHazardMgrX)
 ADD_SUBDIRECTORY(pCTDMgr)
+ADD_SUBDIRECTORY(pFrontEstimate)
 
 ##############################################################################
 #                           END of CMakeLists.txt
