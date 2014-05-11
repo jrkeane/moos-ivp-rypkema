@@ -55,7 +55,7 @@ ProcessConfig = pCTDMgr
   #ifdef VNAME archie
     reverse = false
   #elseifdef VNAME betty
-    reverse = false
+    reverse = true
   #endif
 }
 
