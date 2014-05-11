@@ -17,6 +17,7 @@ ADD_EXECUTABLE(pCTDMgr ${SRC})
 
 TARGET_LINK_LIBRARIES(pCTDMgr
    ${MOOS_LIBRARIES}
+   ufield
    geometry
    mbutil
    m

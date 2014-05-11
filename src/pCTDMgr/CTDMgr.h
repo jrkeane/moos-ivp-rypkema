@@ -37,8 +37,10 @@ class CTDMgr : public CMOOSApp
    double m_averaged_temp;
    double m_prev_averaged_temp;
    std::deque<double> m_points;
+   std::vector<double> m_temps;
    std::vector<double> m_x_pos;
    std::vector<double> m_y_pos;
+   std::vector<double> m_times;
    std::string m_host_community;
    bool m_reverse;
    std::string m_string_polygon;
@@ -48,6 +50,9 @@ class CTDMgr : public CMOOSApp
    bool m_off;
    bool m_out_2_in;
    int leave_count;
+   double m_bnd_x_1, m_bnd_y_1, m_bnd_x_2, m_bnd_y_2;
+   bool m_got_point, m_calced_point, m_share_complete;
+   double m_prev_time;
 };
 
 #endif
