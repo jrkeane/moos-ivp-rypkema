@@ -26,9 +26,19 @@ Processconfig = ANTLER
   Run = uFldMessageHandler @ NewConsole = false
 
   //Run = uTimerScript       @ NewConsole = false
-  Run = pFrontEstimate     @ NewConsole = false
+  Run = pFrontEstimateX     @ NewConsole = false
   Run = pBasicContactMgr   @ NewConsole = false
   Run = pCTDMgr            @ NewConsole = false
+  Run = uTimerScript	   @ NewConsole = false
+}
+
+//--------------------------------------------------------------
+// uTimerScript configuration block
+ProcessConfig = uTimerScript
+{
+  paused = false
+  event = var=CLEAR_FOR_SHARE, val="true", time=16
+  reset_time = end
 }
 
 //--------------------------------------------------------------
@@ -45,7 +55,7 @@ ProcessConfig = pCTDMgr
   #ifdef VNAME archie
     reverse = false
   #elseifdef VNAME betty
-    reverse = true
+    reverse = false
   #endif
 }
 

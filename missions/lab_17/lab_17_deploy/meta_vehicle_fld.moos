@@ -28,8 +28,18 @@ Processconfig = ANTLER
   Run = iGPS_KF            @ NewConsole = false
   Run = iOS5000AC          @ NewConsole = false
   Run = uProcessWatch_fld  @ NewConsole = false
-  Run = pFrontEstimate     @ NewConsole = false
+  Run = pFrontEstimateX     @ NewConsole = false
   Run = pCTDMgr            @ NewConsole = false
+  Run = uTimerScript	   @ NewConsole = false
+}
+
+//--------------------------------------------------------------
+// uTimerScript configuration block
+ProcessConfig = uTimerScript
+{
+  paused = false
+  event = var=CLEAR_FOR_SHARE, val="true", time=16
+  reset_time = end
 }
 
 //--------------------------------------------------------------

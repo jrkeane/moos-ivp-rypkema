@@ -2,16 +2,15 @@
 
 initialize   DEPLOY  = false
 initialize   RETURN  = false
-initialize   STATION_KEEP = false
-initialize   SURVEY  = true
+initialize   STATION = false
+initialize   SURVEY  = false
 initialize   AVOID   = true
 initialize   SURVEY_UNDERWAY = false
-initialize   SPIRALCW = false
-initialize   SPIRALCCW = false
 initialize   SEARCH_FIRST = true
 initialize   SEARCH_SECOND = false
 initialize   BEST_FIT = false
 initialize   SAFETY = true
+initialize   GET_POINT = false
 
 //----------------------------------------------
 Behavior = BHV_StationKeep
@@ -37,26 +36,28 @@ Behavior = BHV_ArcSearch
   condition  = SEARCH_FIRST = true
   perpetual  = true
   endflag    = SEARCH_FIRST = false
-  endflag    = SEARCH_SECOND = true
+  endflag    = STATION = true
+  endflag    = GET_POINT = true
+  activeflag = SURVEY_UNDERWAY = true
 
   #ifdef VNAME archie
     speed = 1.4
-    center_x = 70
-    center_y = -90
-    radius = 80
-    angle = 0
+    center_x = 90
+    center_y = -100
+    radius = 70
+    angle = -10
     arrival_radius = 5
-    swath = -160
+    swath = -180
     num_points = 10
 #elseifdef VNAME betty
     speed = 1.4
-    center_x = 30
-    center_y = -120
-    radius = 80
-    angle = 180
+    center_x = 10
+    center_y = -110
+    radius = 70
+    angle = 210
     arrival_radius = 5
-    swath = 110
-    num_points = 6
+    swath = 180
+    num_points = 9
   #endif
 }
 
@@ -74,65 +75,48 @@ Behavior = BHV_ArcSearch
 
   #ifdef VNAME archie
     speed = 1.4
-    center_x = 30
-    center_y = -120
-    radius = 80
-    angle = 180
+    center_x = 10
+    center_y = -110
+    radius = 70
+    angle = 210
     arrival_radius = 5
-    swath = 110
-    num_points = 6
+    swath = 180
+    num_points = 9
 #elseifdef VNAME betty
     speed = 1.4
-    center_x = 70
-    center_y = -90
-    radius = 80
-    angle = 0
+    center_x = 90
+    center_y = -100
+    radius = 70
+    angle = -10
     arrival_radius = 5
-    swath = -160
+    swath = -180
     num_points = 10
   #endif
 }
 
 //----------------------------------------------
-// Clockwise Spiral ----------------------------
-Behavior = BHV_MySpiral
+// Ladder Search -------------------------------
+Behavior = BHV_Waypoint
 {
-  name       = spiral_normal
-  pwt        = 200
-  condition  = SPIRALCW = true
+  name       = ladder_search
+  pwt        = 100
+  condition  = SURVEY = true
+  condition  = DEPLOY = true
   perpetual  = true
-  endflag    = SPIRALCW = false
-  activeflag = SURVEY_UNDERWAY = true
+  endflag    = RETURN = true
+  endflag    = SURVEY = false
+  updates    = update_search_$(VNAME)
 
-  speed = 1.4
-  rudder_start = 100
-  rudder_increment = 0.25
-  rudder_increment_factor = 1.26
-  spiral_time_length = 200
-  rudder_min = 20
-  points_distance = 10
-  ccw = 0
-}
+         speed = 1.4
+        radius = 2.0
+     nm_radius = 8.0
+        points = $(START_POS)
+	//repeat=10
+          lead = 8
 
-//----------------------------------------------
-// Counterclockwise Spiral ---------------------
-Behavior = BHV_MySpiral
-{
-  name       = spiral_counter
-  pwt        = 200
-  condition  = SPIRALCCW = true
-  perpetual  = true
-  endflag    = SPIRALCCW = false
-  activeflag = SURVEY_UNDERWAY = true
-
-  speed = 1.4
-  rudder_start = 100
-  rudder_increment = 0.25
-  rudder_increment_factor = 1.26
-  spiral_time_length = 200
-  rudder_min = 20
-  points_distance = 10
-  ccw = 1
+          #ifdef VNAME archie
+          order = reverse
+          #endif
 }
 
 //----------------------------------------------
@@ -182,32 +166,29 @@ Behavior = BHV_Waypoint
 
 //----------------------------------------------
 // Collision Avoidance -------------------------
-Behavior = BHV_AvoidCollision
-{
-  name       = avd_
-  pwt        = 100
-  condition  = COLL_AVD = true
-  condition  = MODE==ACTIVE
-  updates    = CONTACT_INFO
-  endflag    = CONTACT_RESOLVED = $[CONTACT]
-  templating = spawn
+//------------------------------------------------
+ Behavior = BHV_AvoidCollision
+ {
+   name       = avdcollision_
+   pwt        = 200
+   condition  = AVOID = true
+   updates    = CONTACT_INFO
+  endflag = CONTACT_RESOLVED = $[CONTACT]
+   templating = spawn
 
-               contact = to-be-set
-      on_no_contact_ok = true
-           extrapolate = true
-                 decay = 30,60
+                contact = to-be-set
+       on_no_contact_ok = true
+            extrapolate = true
+                  decay = 30,60
 
-//---------------------------------NEW
-        pwt_outer_dist = 30
-        pwt_inner_dist = 15
-        completed_dist = 35
-     min_util_cpa_dist = 8
-//---------------------------------
-
-     max_util_cpa_dist = 25
-             pwt_grade = linear
-   bearing_line_config = white:0, green:0.65, yellow:0.8, red:1.0
-}
+         pwt_outer_dist = 50
+         pwt_inner_dist = 20
+         completed_dist = 75
+      min_util_cpa_dist = 8
+      max_util_cpa_dist = 25
+              pwt_grade = linear
+    bearing_line_config = white:0, green:0.65, yellow:0.8, red:1.0
+ }
 
 //----------------------------------------------
 Behavior = BHV_OpRegion
